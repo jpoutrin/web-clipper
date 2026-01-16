@@ -54,8 +54,41 @@ async function handleMessage(message: Message): Promise<unknown> {
         expiresAt: number;
       });
 
+    case 'DEV_LOGIN':
+      return devLogin(message.payload as { serverUrl: string });
+
     default:
       return { error: 'Unknown message type' };
+  }
+}
+
+// Dev mode login - directly fetch token without OAuth
+async function devLogin(payload: { serverUrl: string }): Promise<{ success: boolean } | { error: string }> {
+  try {
+    authState.serverUrl = payload.serverUrl;
+
+    const response = await fetch(`${payload.serverUrl}/auth/dev-token`);
+
+    if (!response.ok) {
+      if (response.status === 403) {
+        return { error: 'Dev mode not enabled on server' };
+      }
+      return { error: `Failed to get dev token: ${response.status}` };
+    }
+
+    const tokens = await response.json();
+    authState.accessToken = tokens.access_token;
+    authState.refreshToken = tokens.refresh_token;
+    authState.expiresAt = tokens.expires_at;
+
+    await chrome.storage.local.set({ authState });
+
+    // Fetch server config after successful auth
+    await fetchServerConfig();
+
+    return { success: true };
+  } catch (err) {
+    return { error: `Dev login failed: ${err}` };
   }
 }
 

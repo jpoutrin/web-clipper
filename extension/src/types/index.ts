@@ -58,7 +58,8 @@ export type MessageType =
   | 'FETCH_CONFIG'
   | 'CAPTURE_PAGE'
   | 'SUBMIT_CLIP'
-  | 'AUTH_CALLBACK';
+  | 'AUTH_CALLBACK'
+  | 'DEV_LOGIN';
 
 export interface Message {
   type: MessageType;

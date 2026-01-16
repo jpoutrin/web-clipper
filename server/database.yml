@@ -1,0 +1,12 @@
+---
+development:
+  dialect: sqlite3
+  database: ./clipper_development.sqlite3
+
+test:
+  dialect: sqlite3
+  database: ./clipper_test.sqlite3
+
+production:
+  dialect: sqlite3
+  database: {{ envOr "CLIP_DATABASE" "./clipper_production.sqlite3" }}

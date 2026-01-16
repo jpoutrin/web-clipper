@@ -5,6 +5,7 @@ const loginSection = document.getElementById('login-section')!;
 const clipSection = document.getElementById('clip-section')!;
 const serverUrlInput = document.getElementById('server-url') as HTMLInputElement;
 const connectBtn = document.getElementById('connect-btn') as HTMLButtonElement;
+const devLoginBtn = document.getElementById('dev-login-btn') as HTMLButtonElement;
 const logoutBtn = document.getElementById('logout-btn') as HTMLButtonElement;
 const clipTitleInput = document.getElementById('clip-title') as HTMLInputElement;
 const clipTagsInput = document.getElementById('clip-tags') as HTMLInputElement;
@@ -50,7 +51,7 @@ function updateUI() {
   hideMessage();
 }
 
-// Connect button handler
+// Connect button handler (OAuth flow)
 connectBtn.addEventListener('click', async () => {
   const serverUrl = serverUrlInput.value.trim();
   if (!serverUrl) {
@@ -77,6 +78,39 @@ connectBtn.addEventListener('click', async () => {
     showMessage(`Connection failed: ${err}`, 'error');
   } finally {
     setLoading(connectBtn, false);
+  }
+});
+
+// Dev Login button handler (direct token, no OAuth)
+devLoginBtn.addEventListener('click', async () => {
+  const serverUrl = serverUrlInput.value.trim();
+  if (!serverUrl) {
+    showMessage('Please enter a server URL', 'error');
+    return;
+  }
+
+  setLoading(devLoginBtn, true);
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'DEV_LOGIN',
+      payload: { serverUrl }
+    });
+
+    if (response.error) {
+      showMessage(response.error, 'error');
+    } else if (response.success) {
+      // Update local state
+      const state = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+      authState = state.authState;
+      config = state.serverConfig;
+      updateUI();
+      showMessage('Dev login successful!', 'success');
+    }
+  } catch (err) {
+    showMessage(`Dev login failed: ${err}`, 'error');
+  } finally {
+    setLoading(devLoginBtn, false);
   }
 });
 

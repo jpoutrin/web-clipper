@@ -1,0 +1,11 @@
+create_table("users") {
+  t.Column("id", "uuid", {primary: true})
+  t.Column("email", "string", {})
+  t.Column("name", "string", {})
+  t.Column("oauth_id", "string", {})
+  t.Column("clip_directory", "string", {null: true})
+  t.Timestamps()
+}
+
+add_index("users", "oauth_id", {unique: true})
+add_index("users", "email", {})
