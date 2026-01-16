@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Clipper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Web Clipper</h1>
+
+    <!-- Login Section -->
+    <div id="login-section" class="section">
+      <div class="form-group">
+        <label for="server-url">Server URL</label>
+        <input type="url" id="server-url" placeholder="https://your-server.com" />
+      </div>
+      <button id="connect-btn" class="btn btn-primary">Connect</button>
+    </div>
+
+    <!-- Clip Section (shown when authenticated) -->
+    <div id="clip-section" class="section hidden">
+      <div class="status connected">
+        <span class="status-dot"></span>
+        Connected
+        <button id="logout-btn" class="btn-link">Logout</button>
+      </div>
+
+      <div class="form-group">
+        <label for="clip-title">Title</label>
+        <input type="text" id="clip-title" placeholder="Page title" />
+      </div>
+
+      <div class="form-group">
+        <label for="clip-tags">Tags (comma separated)</label>
+        <input type="text" id="clip-tags" placeholder="tag1, tag2" />
+      </div>
+
+      <div class="form-group">
+        <label for="clip-notes">Notes</label>
+        <textarea id="clip-notes" placeholder="Optional notes..." rows="3"></textarea>
+      </div>
+
+      <button id="clip-btn" class="btn btn-primary">Clip Page</button>
+    </div>
+
+    <!-- Message Display -->
+    <div id="message" class="message hidden"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
