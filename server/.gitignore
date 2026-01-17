@@ -1,6 +1,8 @@
 vendor/
 **/*.log
 **/*.sqlite
+# Local config overrides (not committed)
+config/*.local.yaml
 .idea/
 bin/
 tmp/
