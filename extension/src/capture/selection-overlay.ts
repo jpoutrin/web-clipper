@@ -183,11 +183,86 @@ export class SelectionOverlay {
           to { transform: rotate(360deg); }
         }
 
+        /* Success State */
+        .wc-toolbar.success {
+          background: #ecfdf5;
+          border: 1px solid #10b981;
+        }
+
+        .wc-success {
+          display: none;
+          align-items: center;
+          gap: 8px;
+          color: #065f46;
+          font-weight: 500;
+        }
+
+        .wc-success.visible {
+          display: flex;
+        }
+
+        .wc-success-icon {
+          width: 20px;
+          height: 20px;
+          color: #10b981;
+        }
+
+        /* Error State */
+        .wc-toolbar.error {
+          background: #fef2f2;
+          border: 1px solid #ef4444;
+        }
+
+        .wc-error {
+          display: none;
+          align-items: center;
+          gap: 8px;
+          color: #991b1b;
+          font-weight: 500;
+        }
+
+        .wc-error.visible {
+          display: flex;
+        }
+
+        .wc-error-icon {
+          width: 20px;
+          height: 20px;
+          color: #ef4444;
+        }
+
+        /* Fade out animation */
+        .wc-toolbar.fade-out {
+          animation: fadeOut 200ms ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+          from { opacity: 1; transform: translateX(-50%) translateY(0); }
+          to { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        @keyframes successPop {
+          0% { transform: scale(0); }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+
+        .wc-success-icon {
+          animation: successPop 400ms ease-out;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .wc-highlight-box {
             transition: none;
           }
           .wc-spinner {
+            animation: none;
+          }
+          .wc-toolbar.fade-out {
+            animation: none;
+            opacity: 0;
+          }
+          .wc-success-icon {
             animation: none;
           }
         }
@@ -210,11 +285,29 @@ export class SelectionOverlay {
         <div class="wc-spinner"></div>
         <span>Capturing...</span>
       </div>
+      <div class="wc-success" id="wc-success">
+        <svg class="wc-success-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>Clip saved successfully!</span>
+      </div>
+      <div class="wc-error" id="wc-error">
+        <svg class="wc-error-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span id="wc-error-message">Failed to save clip</span>
+      </div>
       <button class="wc-toolbar-btn primary" id="wc-confirm" disabled aria-disabled="true">
         Clip Selection
       </button>
+      <button class="wc-toolbar-btn primary" id="wc-retry" style="display: none;">
+        Retry
+      </button>
       <button class="wc-toolbar-btn secondary" id="wc-cancel">
         Cancel (Esc)
+      </button>
+      <button class="wc-toolbar-btn secondary" id="wc-close" style="display: none;">
+        Close
       </button>
     `;
 
@@ -237,9 +330,13 @@ export class SelectionOverlay {
     // Toolbar buttons
     const confirmBtn = this.shadowRoot.getElementById('wc-confirm');
     const cancelBtn = this.shadowRoot.getElementById('wc-cancel');
+    const retryBtn = this.shadowRoot.getElementById('wc-retry');
+    const closeBtn = this.shadowRoot.getElementById('wc-close');
 
     confirmBtn?.addEventListener('click', this.handleConfirm);
     cancelBtn?.addEventListener('click', this.handleCancel);
+    retryBtn?.addEventListener('click', this.handleRetry);
+    closeBtn?.addEventListener('click', this.handleClose);
   }
 
   /**
@@ -334,34 +431,125 @@ export class SelectionOverlay {
 
     this.isActive = false;
 
-    // Show loading state
+    // Get UI elements
     const instruction = this.shadowRoot.getElementById('wc-instruction');
     const loading = this.shadowRoot.getElementById('wc-loading');
+    const success = this.shadowRoot.getElementById('wc-success');
+    const error = this.shadowRoot.getElementById('wc-error');
+    const errorMessage = this.shadowRoot.getElementById('wc-error-message');
     const confirmBtn = this.shadowRoot.getElementById('wc-confirm') as HTMLButtonElement;
     const cancelBtn = this.shadowRoot.getElementById('wc-cancel') as HTMLButtonElement;
+    const retryBtn = this.shadowRoot.getElementById('wc-retry') as HTMLButtonElement;
+    const closeBtn = this.shadowRoot.getElementById('wc-close') as HTMLButtonElement;
 
+    // Show loading state
     if (instruction) instruction.style.display = 'none';
     if (loading) loading.classList.add('visible');
-    if (confirmBtn) confirmBtn.disabled = true;
-    if (cancelBtn) cancelBtn.disabled = true;
+    if (confirmBtn) confirmBtn.style.display = 'none';
+    if (cancelBtn) cancelBtn.style.display = 'none';
 
     try {
       // Capture the selection
       const result = await captureSelection(this.selectedElement, this.config);
 
-      // Cleanup and callback
-      this.cleanup();
-      this.callbacks.onSelect(result);
+      // Send to background for clip submission and wait for response
+      const response = await chrome.runtime.sendMessage({
+        type: 'SELECTION_COMPLETE',
+        payload: {
+          mode: 'selection',
+          title: document.title,
+          url: window.location.href,
+          markdown: result.markdown,
+          html: result.html,
+          images: result.images,
+          selector: result.selector,
+        },
+      });
+
+      // Hide loading
+      if (loading) loading.classList.remove('visible');
+
+      if (response.success || response.path) {
+        // Show success state
+        this.toolbar.classList.add('success');
+        if (success) success.classList.add('visible');
+        if (closeBtn) closeBtn.style.display = '';
+
+        // Hide highlight box
+        this.highlightBox.classList.remove('visible');
+
+        // Auto-dismiss after 2.5 seconds
+        setTimeout(() => {
+          this.dismissWithAnimation();
+        }, 2500);
+      } else {
+        // Show error state
+        this.showError(response.error || 'Failed to save clip');
+      }
     } catch (err) {
       console.error('Selection capture failed:', err);
-      // Re-enable on error
-      this.isActive = true;
-      if (instruction) instruction.style.display = '';
       if (loading) loading.classList.remove('visible');
-      if (confirmBtn) confirmBtn.disabled = false;
-      if (cancelBtn) cancelBtn.disabled = false;
+      this.showError(err instanceof Error ? err.message : 'Capture failed');
     }
   };
+
+  /**
+   * Show error state in toolbar
+   */
+  private showError(message: string): void {
+    const error = this.shadowRoot.getElementById('wc-error');
+    const errorMessage = this.shadowRoot.getElementById('wc-error-message');
+    const retryBtn = this.shadowRoot.getElementById('wc-retry') as HTMLButtonElement;
+    const closeBtn = this.shadowRoot.getElementById('wc-close') as HTMLButtonElement;
+
+    this.toolbar.classList.add('error');
+    if (error) error.classList.add('visible');
+    if (errorMessage) errorMessage.textContent = message;
+    if (retryBtn) retryBtn.style.display = '';
+    if (closeBtn) closeBtn.style.display = '';
+
+    // Re-enable for retry
+    this.isActive = true;
+  }
+
+  /**
+   * Handle retry button click
+   */
+  private handleRetry = (): void => {
+    // Reset UI to loading state and retry
+    const error = this.shadowRoot.getElementById('wc-error');
+    const retryBtn = this.shadowRoot.getElementById('wc-retry') as HTMLButtonElement;
+    const closeBtn = this.shadowRoot.getElementById('wc-close') as HTMLButtonElement;
+
+    this.toolbar.classList.remove('error');
+    if (error) error.classList.remove('visible');
+    if (retryBtn) retryBtn.style.display = 'none';
+    if (closeBtn) closeBtn.style.display = 'none';
+
+    // Retry capture
+    this.handleConfirm();
+  };
+
+  /**
+   * Handle close button click
+   */
+  private handleClose = (): void => {
+    this.dismissWithAnimation();
+  };
+
+  /**
+   * Dismiss overlay with fade animation
+   */
+  private dismissWithAnimation(): void {
+    this.toolbar.classList.add('fade-out');
+    this.highlightBox.style.opacity = '0';
+    this.highlightBox.style.transition = 'opacity 200ms ease-out';
+
+    setTimeout(() => {
+      this.cleanup();
+      // Don't call onSelect callback since we already submitted
+    }, 200);
+  }
 
   /**
    * Handle cancel button click
