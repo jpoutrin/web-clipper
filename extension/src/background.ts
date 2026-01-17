@@ -1,14 +1,32 @@
-import { AuthState, ServerConfig, ClipPayload, ClipResponse, Message } from './types';
+import {
+  AuthState,
+  ServerConfig,
+  ClipPayload,
+  ClipResponse,
+  Message,
+  CaptureResult,
+  ScreenshotResult,
+} from './types';
+import { compressScreenshot } from './capture/screenshot';
 
 // State management
 let authState: AuthState = {
   accessToken: null,
   refreshToken: null,
   expiresAt: null,
-  serverUrl: ''
+  serverUrl: '',
 };
 
 let serverConfig: ServerConfig | null = null;
+
+// Pending selection state (for when popup closes during selection)
+let pendingSelection: {
+  tabId: number;
+  config: { maxDimensionPx: number; maxSizeBytes: number };
+} | null = null;
+
+// Capture lock to prevent concurrent captures
+let captureInProgress = false;
 
 // Initialize on install
 chrome.runtime.onInstalled.addListener(async () => {
@@ -25,12 +43,15 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 // Message handling
-chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
-  handleMessage(message).then(sendResponse);
+chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
+  handleMessage(message, sender).then(sendResponse);
   return true; // Async response
 });
 
-async function handleMessage(message: Message): Promise<unknown> {
+async function handleMessage(
+  message: Message,
+  sender: chrome.runtime.MessageSender
+): Promise<unknown> {
   switch (message.type) {
     case 'GET_STATE':
       return { authState, serverConfig };
@@ -48,17 +69,163 @@ async function handleMessage(message: Message): Promise<unknown> {
       return submitClip(message.payload as ClipPayload);
 
     case 'AUTH_CALLBACK':
-      return handleAuthCallback(message.payload as {
-        accessToken: string;
-        refreshToken: string;
-        expiresAt: number;
-      });
+      return handleAuthCallback(
+        message.payload as {
+          accessToken: string;
+          refreshToken: string;
+          expiresAt: number;
+        }
+      );
 
     case 'DEV_LOGIN':
       return devLogin(message.payload as { serverUrl: string });
 
+    case 'CAPTURE_SCREENSHOT':
+      return withCaptureLock(() => captureScreenshot());
+
+    case 'FETCH_IMAGE':
+      return fetchImage((message.payload as { url: string }).url);
+
+    case 'SELECTION_COMPLETE':
+      return handleSelectionComplete(message.payload as CaptureResult);
+
+    case 'SELECTION_CANCELLED':
+      pendingSelection = null;
+      return { cancelled: true };
+
     default:
       return { error: 'Unknown message type' };
+  }
+}
+
+/**
+ * Wrapper to prevent concurrent captures
+ */
+async function withCaptureLock<T>(operation: () => Promise<T>): Promise<T | { error: string }> {
+  if (captureInProgress) {
+    return { error: 'Capture already in progress' };
+  }
+
+  captureInProgress = true;
+  try {
+    return await operation();
+  } finally {
+    captureInProgress = false;
+  }
+}
+
+/**
+ * Capture screenshot of visible viewport
+ */
+async function captureScreenshot(): Promise<CaptureResult | { error: string }> {
+  try {
+    // Get current tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab.id || !tab.windowId) {
+      return { error: 'No active tab' };
+    }
+
+    // Capture visible area
+    const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
+      format: 'png',
+      quality: 100,
+    });
+
+    // Extract base64 data
+    const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+
+    // Get dimensions and compress
+    const config = {
+      maxSizeBytes: serverConfig?.images.maxSizeBytes || 5242880,
+      maxDimensionPx: serverConfig?.images.maxDimensionPx || 2048,
+    };
+
+    const compressed = await compressScreenshot(base64, config);
+
+    const filename = `screenshot-${Date.now()}.${compressed.format}`;
+
+    return {
+      mode: 'screenshot',
+      title: tab.title || 'Screenshot',
+      url: tab.url || '',
+      images: [],
+      screenshot: {
+        filename,
+        data: compressed.data,
+        width: compressed.width,
+        height: compressed.height,
+      },
+    };
+  } catch (err) {
+    console.error('Screenshot capture failed:', err);
+    return { error: `Screenshot capture failed: ${err}` };
+  }
+}
+
+/**
+ * Fetch image via background script (to bypass CORS)
+ */
+async function fetchImage(url: string): Promise<{ data: string; contentType: string } | { error: string }> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return { error: `HTTP ${response.status}` };
+    }
+
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+
+    return {
+      data: base64,
+      contentType: blob.type,
+    };
+  } catch (err) {
+    return { error: `Failed to fetch image: ${err}` };
+  }
+}
+
+/**
+ * Handle selection complete from content script
+ * Submits the clip automatically since popup is closed
+ */
+async function handleSelectionComplete(result: CaptureResult): Promise<{ success: boolean; path?: string } | { error: string }> {
+  pendingSelection = null;
+
+  // Build clip payload from capture result
+  const clipPayload: ClipPayload = {
+    title: result.title,
+    url: result.url,
+    markdown: result.markdown || '',
+    tags: [],
+    notes: '',
+    images: result.images || [],
+    mode: 'selection',
+  };
+
+  // Submit the clip
+  const response = await submitClip(clipPayload);
+
+  // Show notification with result
+  if (response.success) {
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: 'Web Clipper',
+      message: `Selection clipped! Saved to: ${response.path}`,
+    });
+    return { success: true, path: response.path };
+  } else {
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title: 'Web Clipper - Error',
+      message: response.error || 'Failed to save clip',
+    });
+    return { error: response.error || 'Failed to save clip' };
   }
 }
 
@@ -106,7 +273,7 @@ async function initiateLogin(payload: { serverUrl: string }): Promise<{ success:
       url: loginUrl,
       type: 'popup',
       width: 500,
-      height: 600
+      height: 600,
     });
 
     const popupId = popup?.id;
@@ -122,7 +289,7 @@ async function initiateLogin(payload: { serverUrl: string }): Promise<{ success:
         try {
           // Check if popup still exists
           const windows = await chrome.windows.getAll({ populate: true });
-          const popupWindow = windows.find(w => w.id === popupId);
+          const popupWindow = windows.find((w) => w.id === popupId);
 
           if (!popupWindow) {
             clearInterval(checkInterval);
@@ -166,7 +333,7 @@ async function initiateLogin(payload: { serverUrl: string }): Promise<{ success:
                     const auth = (window as any).webClipperAuth;
                     console.log('Web Clipper (injected): Found auth object:', auth);
                     return auth;
-                  }
+                  },
                 });
 
                 console.log('Web Clipper: Script execution results:', results);
@@ -176,7 +343,7 @@ async function initiateLogin(payload: { serverUrl: string }): Promise<{ success:
                   console.log('Web Clipper: Got tokens:', {
                     hasAccessToken: !!tokens.accessToken,
                     hasRefreshToken: !!tokens.refreshToken,
-                    expiresAt: tokens.expiresAt
+                    expiresAt: tokens.expiresAt,
                   });
 
                   clearInterval(checkInterval);
@@ -248,7 +415,7 @@ async function logout(): Promise<{ success: boolean }> {
     accessToken: null,
     refreshToken: null,
     expiresAt: null,
-    serverUrl: authState.serverUrl // Keep server URL
+    serverUrl: authState.serverUrl, // Keep server URL
   };
   serverConfig = null;
 
@@ -266,9 +433,9 @@ async function fetchServerConfig(): Promise<ServerConfig | { error: string }> {
   try {
     const response = await fetch(`${authState.serverUrl}/api/v1/config`, {
       headers: {
-        'Authorization': `Bearer ${authState.accessToken}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${authState.accessToken}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -301,10 +468,10 @@ async function submitClip(payload: ClipPayload): Promise<ClipResponse> {
     const response = await fetch(`${authState.serverUrl}/api/v1/clips`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${authState.accessToken}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${authState.accessToken}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -318,7 +485,7 @@ async function submitClip(payload: ClipPayload): Promise<ClipResponse> {
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        error: errorData.error || `Server error: ${response.status}`
+        error: errorData.error || `Server error: ${response.status}`,
       };
     }
 
@@ -338,9 +505,9 @@ async function refreshToken(): Promise<boolean> {
     const response = await fetch(`${authState.serverUrl}/auth/refresh`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ refresh_token: authState.refreshToken })
+      body: JSON.stringify({ refresh_token: authState.refreshToken }),
     });
 
     if (!response.ok) {

@@ -1,19 +1,138 @@
 import { Readability } from '@mozilla/readability';
 import TurndownService from 'turndown';
-import { CaptureResult, ImagePayload, Message } from './types';
+import { CaptureResult, ImagePayload, Message, CaptureConfig } from './types';
+import { captureBookmark, generateBookmarkMarkdown } from './capture/bookmark';
+import { captureFullPage } from './capture/fullpage';
+import { SelectionOverlay } from './capture/selection-overlay';
+
+// Active selection overlay instance
+let selectionOverlay: SelectionOverlay | null = null;
 
 // Listen for messages from popup/background
 chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
-  if (message.type === 'CAPTURE_PAGE') {
-    const config = message.payload as { maxDimensionPx: number; maxSizeBytes: number };
-    capturePage(config).then(sendResponse);
-    return true; // Async response
-  }
-  return false;
+  handleMessage(message)
+    .then(sendResponse)
+    .catch((err) => {
+      console.error('Content script error:', err);
+      sendResponse({ error: err.message });
+    });
+  return true; // Async response
 });
 
-// Main capture function
-async function capturePage(config: { maxDimensionPx: number; maxSizeBytes: number }): Promise<CaptureResult> {
+/**
+ * Handle incoming messages
+ */
+async function handleMessage(message: Message): Promise<unknown> {
+  const payload = message.payload as { config?: CaptureConfig } | undefined;
+  const config: CaptureConfig = payload?.config || {
+    maxDimensionPx: 2048,
+    maxSizeBytes: 5242880,
+  };
+
+  switch (message.type) {
+    case 'CAPTURE_PAGE':
+      return captureArticle(config);
+
+    case 'CAPTURE_BOOKMARK':
+      return captureBookmarkMode();
+
+    case 'CAPTURE_FULLPAGE':
+      return captureFullPageMode(config);
+
+    case 'START_SELECTION_MODE':
+      return startSelectionMode(config);
+
+    case 'CANCEL_SELECTION_MODE':
+      return cancelSelectionMode();
+
+    default:
+      throw new Error(`Unknown message type: ${message.type}`);
+  }
+}
+
+/**
+ * Capture bookmark (URL + title + excerpt)
+ */
+function captureBookmarkMode(): CaptureResult {
+  const bookmark = captureBookmark();
+  const markdown = generateBookmarkMarkdown(bookmark);
+
+  return {
+    mode: 'bookmark',
+    title: bookmark.title,
+    url: bookmark.url,
+    markdown,
+    images: [],
+    excerpt: bookmark.excerpt,
+    favicon: bookmark.favicon,
+  };
+}
+
+/**
+ * Capture full page with inlined styles
+ */
+async function captureFullPageMode(config: CaptureConfig): Promise<CaptureResult> {
+  const result = await captureFullPage(config);
+
+  return {
+    mode: 'fullpage',
+    title: document.title,
+    url: window.location.href,
+    html: result.html,
+    images: result.images,
+  };
+}
+
+/**
+ * Start selection mode
+ */
+function startSelectionMode(config: CaptureConfig): { started: boolean } {
+  // Cancel any existing overlay
+  if (selectionOverlay) {
+    selectionOverlay = null;
+  }
+
+  // Create new overlay
+  selectionOverlay = new SelectionOverlay(config, {
+    onSelect: (result) => {
+      // Send result to background script
+      chrome.runtime.sendMessage({
+        type: 'SELECTION_COMPLETE',
+        payload: {
+          mode: 'selection',
+          title: document.title,
+          url: window.location.href,
+          markdown: result.markdown,
+          html: result.html,
+          images: result.images,
+          selector: result.selector,
+        },
+      });
+      selectionOverlay = null;
+    },
+    onCancel: () => {
+      chrome.runtime.sendMessage({ type: 'SELECTION_CANCELLED' });
+      selectionOverlay = null;
+    },
+  });
+
+  return { started: true };
+}
+
+/**
+ * Cancel selection mode
+ */
+function cancelSelectionMode(): { cancelled: boolean } {
+  if (selectionOverlay) {
+    selectionOverlay = null;
+  }
+  return { cancelled: true };
+}
+
+/**
+ * Capture article using Readability (existing functionality)
+ */
+async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
   // Clone document for Readability (it modifies the DOM)
   const documentClone = document.cloneNode(true) as Document;
 
@@ -23,10 +142,11 @@ async function capturePage(config: { maxDimensionPx: number; maxSizeBytes: numbe
 
   if (!article) {
     return {
+      mode: 'article',
       title: document.title,
       url: window.location.href,
       markdown: '# ' + document.title + '\n\n*Could not extract article content*',
-      images: []
+      images: [],
     };
   }
 
@@ -54,7 +174,7 @@ async function capturePage(config: { maxDimensionPx: number; maxSizeBytes: numbe
   const turndownService = new TurndownService({
     headingStyle: 'atx',
     codeBlockStyle: 'fenced',
-    emDelimiter: '*'
+    emDelimiter: '*',
   });
 
   // Custom rule for images to use local paths
@@ -65,7 +185,7 @@ async function capturePage(config: { maxDimensionPx: number; maxSizeBytes: numbe
       const alt = img.alt || '';
       const src = img.getAttribute('src') || '';
       return `![${alt}](${src})`;
-    }
+    },
   });
 
   const markdown = turndownService.turndown(tempDiv.innerHTML);
@@ -74,17 +194,20 @@ async function capturePage(config: { maxDimensionPx: number; maxSizeBytes: numbe
   const images = await extractImages(imageMap, config);
 
   return {
+    mode: 'article',
     title: article.title || document.title,
     url: window.location.href,
     markdown,
-    images
+    images,
   };
 }
 
-// Extract and process images
+/**
+ * Extract and process images
+ */
 async function extractImages(
   imageMap: Map<string, string>,
-  config: { maxDimensionPx: number; maxSizeBytes: number }
+  config: CaptureConfig
 ): Promise<ImagePayload[]> {
   const images: ImagePayload[] = [];
 
@@ -95,7 +218,7 @@ async function extractImages(
         images.push({
           filename,
           data: imageData,
-          originalUrl
+          originalUrl,
         });
       }
     } catch (err) {
@@ -106,19 +229,42 @@ async function extractImages(
   return images;
 }
 
-// Fetch and resize a single image
+/**
+ * Fetch and resize a single image
+ */
 async function fetchAndResizeImage(
   url: string,
-  config: { maxDimensionPx: number; maxSizeBytes: number }
+  config: CaptureConfig
 ): Promise<string | null> {
   try {
-    // Fetch the image
+    // Try via background script first (to avoid CORS)
+    const response = await chrome.runtime.sendMessage({
+      type: 'FETCH_IMAGE',
+      payload: { url },
+    });
+
+    if (response.error) {
+      // Fallback to direct fetch
+      return fetchImageDirect(url, config);
+    }
+
+    // Process the image data
+    return processImageData(response.data, response.contentType, config);
+  } catch {
+    // Fallback to direct fetch
+    return fetchImageDirect(url, config);
+  }
+}
+
+/**
+ * Direct image fetch (fallback)
+ */
+async function fetchImageDirect(url: string, config: CaptureConfig): Promise<string | null> {
+  try {
     const response = await fetch(url);
     if (!response.ok) return null;
 
     const blob = await response.blob();
-
-    // Create image element to get dimensions
     const img = await createImageBitmap(blob);
     const { width, height } = img;
 
@@ -173,7 +319,59 @@ async function fetchAndResizeImage(
   }
 }
 
-// Get file extension from URL
+/**
+ * Process image data from background script
+ */
+async function processImageData(
+  base64Data: string,
+  contentType: string,
+  config: CaptureConfig
+): Promise<string | null> {
+  try {
+    const blob = await fetch(`data:${contentType};base64,${base64Data}`).then((r) => r.blob());
+    const img = await createImageBitmap(blob);
+    let { width, height } = img;
+    const maxDim = config.maxDimensionPx;
+
+    if (width > maxDim || height > maxDim) {
+      if (width > height) {
+        height = Math.round((height / width) * maxDim);
+        width = maxDim;
+      } else {
+        width = Math.round((width / height) * maxDim);
+        height = maxDim;
+      }
+    }
+
+    const canvas = new OffscreenCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    let quality = 0.9;
+    let resultBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+
+    while (resultBlob.size > config.maxSizeBytes && quality > 0.1) {
+      quality -= 0.1;
+      resultBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+    }
+
+    if (resultBlob.size > config.maxSizeBytes) {
+      return null;
+    }
+
+    const arrayBuffer = await resultBlob.arrayBuffer();
+    return btoa(
+      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get file extension from URL
+ */
 function getImageExtension(url: string): string {
   try {
     const pathname = new URL(url).pathname;

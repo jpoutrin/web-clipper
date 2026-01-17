@@ -21,9 +21,11 @@ type ClipPayload struct {
 	Title    string         `json:"title"`
 	URL      string         `json:"url"`
 	Markdown string         `json:"markdown"`
+	HTML     string         `json:"html,omitempty"` // Used for fullpage mode
 	Tags     []string       `json:"tags"`
 	Notes    string         `json:"notes"`
 	Images   []ImagePayload `json:"images"`
+	Mode     string         `json:"mode"` // article, bookmark, screenshot, selection, fullpage
 }
 
 // ImagePayload represents an image in the clip
@@ -144,25 +146,55 @@ func createClip(c buffalo.Context) error {
 		}
 	}
 
-	// Generate Markdown with YAML frontmatter
-	frontmatter := generateFrontmatter(req)
-	content := frontmatter + "\n" + req.Markdown
-
-	// Save Markdown file
+	// Generate file content based on mode
 	pageSlug := slugify(req.Title)
 	if pageSlug == "" {
 		pageSlug = "page"
 	}
-	mdPath := filepath.Join(folderPath, pageSlug+".md")
-	if err := os.WriteFile(mdPath, []byte(content), 0644); err != nil {
-		return c.Render(http.StatusInternalServerError, r.JSON(ClipResponse{
-			Success: false,
-			Error:   "Failed to save markdown file",
-		}))
+
+	var filePath string
+	var relPath string
+
+	if req.Mode == "fullpage" && req.HTML != "" {
+		// For fullpage mode, save HTML file
+		filePath = filepath.Join(folderPath, pageSlug+".html")
+		relPath = filepath.Join("web-clips", folderName, pageSlug+".html")
+
+		// Add a comment header with metadata
+		htmlContent := fmt.Sprintf("<!-- \n  Clipped: %s\n  URL: %s\n  Mode: fullpage\n-->\n%s",
+			time.Now().Format(time.RFC3339),
+			req.URL,
+			req.HTML)
+
+		if err := os.WriteFile(filePath, []byte(htmlContent), 0644); err != nil {
+			return c.Render(http.StatusInternalServerError, r.JSON(ClipResponse{
+				Success: false,
+				Error:   "Failed to save HTML file",
+			}))
+		}
+
+		// Also save a companion markdown file with metadata
+		frontmatter := generateFrontmatter(req)
+		mdContent := frontmatter + fmt.Sprintf("\n# %s\n\nFull page capture saved as [%s.html](./%s.html)\n\nOriginal URL: %s\n",
+			req.Title, pageSlug, pageSlug, req.URL)
+		mdPath := filepath.Join(folderPath, pageSlug+".md")
+		os.WriteFile(mdPath, []byte(mdContent), 0644) // Best effort
+	} else {
+		// For other modes, save Markdown file
+		frontmatter := generateFrontmatter(req)
+		content := frontmatter + "\n" + req.Markdown
+		filePath = filepath.Join(folderPath, pageSlug+".md")
+		relPath = filepath.Join("web-clips", folderName, pageSlug+".md")
+
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			return c.Render(http.StatusInternalServerError, r.JSON(ClipResponse{
+				Success: false,
+				Error:   "Failed to save markdown file",
+			}))
+		}
 	}
 
 	// Return relative path
-	relPath := filepath.Join("web-clips", folderName, pageSlug+".md")
 	return c.Render(http.StatusOK, r.JSON(ClipResponse{
 		Success: true,
 		Path:    relPath,
@@ -177,6 +209,13 @@ func generateFrontmatter(req ClipPayload) string {
 	sb.WriteString(fmt.Sprintf("url: %s\n", req.URL))
 	sb.WriteString(fmt.Sprintf("clipped_at: %s\n", time.Now().Format(time.RFC3339)))
 	sb.WriteString(fmt.Sprintf("source: %s\n", extractDomain(req.URL)))
+
+	// Clip mode
+	mode := req.Mode
+	if mode == "" {
+		mode = "article" // Default mode
+	}
+	sb.WriteString(fmt.Sprintf("mode: %s\n", mode))
 
 	// Tags
 	if len(req.Tags) > 0 {
