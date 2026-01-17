@@ -171,9 +171,10 @@ export type ClipMode =
 
 ```typescript
 // Area selection configuration
+// NOTE: Aligns with SelectionOverlayProps from TS-0007
 export interface AreaSelectionConfig {
-  minWidth: number;           // Minimum selection width (px)
-  minHeight: number;          // Minimum selection height (px)
+  minSize: number;            // Minimum selection size in px (width/height)
+  dimOpacity: number;         // Opacity of dimmed overlay (0-1)
   showDimensions: boolean;    // Show width x height label
   snapToGrid: boolean;        // Snap to pixel grid (future)
   gridSize: number;           // Grid size for snapping (future)
@@ -181,8 +182,8 @@ export interface AreaSelectionConfig {
 
 // Default configuration
 export const DEFAULT_AREA_CONFIG: AreaSelectionConfig = {
-  minWidth: 20,
-  minHeight: 20,
+  minSize: 10,                // Matches SelectionOverlay default
+  dimOpacity: 0.5,            // Matches SelectionOverlay default
   showDimensions: true,
   snapToGrid: false,
   gridSize: 10
@@ -192,6 +193,19 @@ export const DEFAULT_AREA_CONFIG: AreaSelectionConfig = {
 ---
 
 ## 3. Overlay Component Implementation
+
+> **⚠️ IMPLEMENTATION NOTE**: This spec originally defined a custom `AreaSelectionOverlay` class.
+> The actual implementation SHOULD use the shared `SelectionOverlay` component from TS-0007
+> (located at `src/ui/components/Overlay/SelectionOverlay.ts`).
+>
+> The `SelectionOverlay` component provides:
+> - Canvas-based rendering with device pixel ratio support
+> - 8 resize handles (4 corners + 4 edge midpoints)
+> - Dimmed overlay with selection cutout
+> - `onSelectionChange` and `onSelectionComplete` callbacks
+> - Minimum size constraints via `minSize` prop (default: 10px)
+>
+> The code below is retained for reference but should be adapted to use the shared component.
 
 ### 3.1 Area Selection Overlay Class
 
@@ -1771,6 +1785,14 @@ Future Enhancement:
 ---
 
 ## 17. UI Specifications
+
+> **⚠️ DESIGN TOKEN MAPPING**: This spec uses generic design tokens that should be mapped to the
+> TS-0007 shared component library tokens in implementation:
+>
+> | This Spec | TS-0007 Equivalent |
+> |-----------|-------------------|
+> | `--neutral-*` | `--wc-gray-*` |
+> | `--primary-*` | `--wc-primary-*` |
 
 ### 17.1 Overlay Container
 

@@ -1618,6 +1618,14 @@ Success message: "Clip saved with 5 embedded charts"
 
 ### 15.2 Progress Indication
 
+> **⚠️ IMPLEMENTATION NOTE**: Use the shared `ProgressBar` component from TS-0007
+> (`src/ui/components/ProgressBar/ProgressBar.ts`) with `variant: 'phased'` and phases:
+> - `detecting`: Detection phase
+> - `capturing`: Per-embed capture with progress
+> - `integrating`: Markdown integration
+>
+> Also use: `Spinner`, `Badge`, and `Toast` components from the shared library.
+
 #### Progress States
 
 ```
@@ -1776,6 +1784,22 @@ interface FailedEmbed {
 ---
 
 ## 16. UI Specifications
+
+> **⚠️ DESIGN TOKEN MAPPING**: This spec uses generic design tokens that should be mapped to the
+> TS-0007 shared component library tokens in implementation:
+>
+> | This Spec | TS-0007 Equivalent |
+> |-----------|-------------------|
+> | `--neutral-*` | `--wc-gray-*` |
+> | `--primary-*` | `--wc-primary-*` |
+> | `--rounded-*` | `--wc-radius-*` |
+> | `--shadow-*` | `--wc-shadow-*` |
+> | `--text-*` | `--wc-text-*` |
+> | `--font-*` | `--wc-font-weight-*` |
+>
+> Additionally, consider using shared components from TS-0007:
+> - **Badge** component for embed status badges (Section 16.2)
+> - **Spinner** component for loading indicators (Section 16.3)
 
 ### 16.1 Embed Highlight Overlay
 

@@ -376,6 +376,14 @@ dimensions: 1920x1080
 
 Inject an overlay that allows users to hover and click to select elements.
 
+> **⚠️ IMPLEMENTATION NOTE**: This spec originally defined a custom `SelectionOverlay` class.
+> The actual implementation SHOULD use components from the shared UI library (TS-0007):
+> - **HighlightOverlay**: For element highlighting during hover (`src/ui/components/Overlay/HighlightOverlay.ts`)
+> - **FloatingToolbar**: For the confirmation toolbar (`src/ui/components/FloatingToolbar/FloatingToolbar.ts`)
+> - **Button**: For action buttons (`src/ui/components/Button/Button.ts`)
+>
+> The code below is retained for reference but should be adapted to use shared components.
+
 **src/capture/selection-overlay.ts**:
 ```typescript
 export class SelectionOverlay {
@@ -1439,6 +1447,20 @@ func generateScreenshotMarkdown(req ClipRequest) string {
 ---
 
 ## 14. Design System
+
+> **⚠️ IMPLEMENTATION NOTE**: The design tokens and component specifications below are superseded
+> by TS-0007 (Shared UI Component Library). Use the following CSS custom properties instead:
+>
+> | This Spec | TS-0007 Equivalent |
+> |-----------|-------------------|
+> | `--neutral-*` | `--wc-gray-*` |
+> | `--primary-*` | `--wc-primary-*` |
+> | `--success-*` | `--wc-success-*` |
+> | `--warning-*` | `--wc-warning-*` |
+> | `--error-*` | `--wc-error-*` |
+>
+> All UI components (Button, Toast, Dialog, etc.) should use the shared component library
+> from `src/ui/components/`. The specifications below are retained for reference only.
 
 ### 14.1 Design Tokens
 

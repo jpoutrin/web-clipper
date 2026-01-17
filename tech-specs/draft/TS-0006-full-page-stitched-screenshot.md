@@ -1189,6 +1189,19 @@ case 'CANCEL_FULLPAGE_CAPTURE':
 
 ## 6. Progress Indication
 
+> **⚠️ IMPLEMENTATION NOTE**: This spec originally defined a custom `FullPageProgressUI` class
+> with embedded CSS. The actual implementation SHOULD use the shared `ProgressBar` component
+> from TS-0007 (`src/ui/components/ProgressBar/ProgressBar.ts`) with these configurations:
+>
+> - **Variant**: `'phased'` for multi-phase progress tracking
+> - **Phases**: `['analyzing', 'preparing', 'capturing', 'stitching', 'compressing']`
+> - **showPercentage**: `true` for segment count feedback
+>
+> Also consider using shared components:
+> - **Button** for cancel action (`variant: 'ghost'`)
+> - **Toast** for completion notifications
+> - **Spinner** for indeterminate phases
+
 ### 6.1 Progress UI Component
 
 **src/popup/fullpage-progress.ts**:
@@ -2455,6 +2468,11 @@ All UI components use design tokens from `docs/design-guidelines.md`:
 ```
 
 ### 20.2 Progress Container Component
+
+> **⚠️ IMPLEMENTATION NOTE**: The CSS below demonstrates the visual design. In implementation,
+> prefer using the shared `ProgressBar` component from TS-0007 which already implements these
+> styles with proper accessibility, animations, and state management. Customize via props rather
+> than creating custom CSS where possible.
 
 ```css
 /* Full Page Progress Container */

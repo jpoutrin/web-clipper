@@ -256,11 +256,14 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   iconOnly?: boolean;
-  icon?: string;       // Icon name or SVG
+  icon?: string;       // SVG string (not icon name)
   iconPosition?: 'left' | 'right';
   fullWidth?: boolean;
   ariaLabel?: string;  // Required for iconOnly
 }
+
+// Factory function
+function createButton(props: ButtonProps, content?: string): HTMLElement;
 ```
 
 #### Variants
@@ -592,15 +595,19 @@ interface ProgressPhase {
 
 ```typescript
 interface DialogProps {
-  variant: 'default' | 'warning' | 'error' | 'success';
+  variant?: 'default' | 'warning' | 'error' | 'success';  // Defaults to 'default'
   title: string;
   description?: string;
-  icon?: string;
+  icon?: string;  // SVG string
   primaryAction?: DialogAction;
   secondaryAction?: DialogAction;
   dismissible?: boolean;
   onClose?: () => void;
 }
+
+// Factory functions
+function createDialog(props: DialogProps): HTMLElement;
+function showDialog(props: DialogProps): Promise<boolean>;
 
 interface DialogAction {
   label: string;
@@ -761,20 +768,21 @@ interface OverlayProps {
   zIndex?: number;
   onEscape?: () => void;
   children?: HTMLElement;
+  className?: string;
 }
 
-interface HighlightOverlayProps extends OverlayProps {
-  target: DOMRect;
-  padding?: number;
-  borderColor?: string;
-  borderWidth?: number;
-}
-
-interface SelectionOverlayProps extends OverlayProps {
+// SelectionOverlay extends Overlay with canvas-based selection
+interface SelectionOverlayProps extends Omit<OverlayProps, 'variant' | 'children'> {
   selection: DOMRect | null;
-  dimOpacity?: number;
+  dimOpacity?: number;                                    // Default: 0.5
+  onSelectionChange?: (selection: DOMRect | null) => void;
+  onSelectionComplete?: (selection: DOMRect) => void;
+  minSize?: number;                                       // Default: 10px
 }
 ```
+
+> **Note**: The previous `HighlightOverlayProps` interface has been removed. Use the base
+> `Overlay` with `variant: 'highlight'` and CSS-based highlighting instead.
 
 #### Variants
 
@@ -938,16 +946,26 @@ class SelectionOverlay {
 
 ```typescript
 interface FloatingToolbarProps {
-  position: 'top' | 'bottom' | 'auto';
-  anchor: DOMRect;           // Element to position relative to
-  viewportPadding?: number;  // Min distance from viewport edge
-  actions: ToolbarAction[];
+  position?: 'top' | 'bottom' | 'auto';  // Default: 'auto'
+  anchor: DOMRect;                        // Element to position relative to
+  viewportPadding?: number;               // Min distance from viewport edge (default: 8)
+  actions: ToolbarItem[];                 // Actions and separators
+  ariaLabel?: string;                     // Accessible label for the toolbar
 }
+
+type ToolbarItem = ToolbarAction | ToolbarSeparator;
+
+interface ToolbarSeparator {
+  type: 'separator';
+}
+
+// Factory function
+function createFloatingToolbar(props: FloatingToolbarProps): HTMLElement;
 
 interface ToolbarAction {
   id: string;
-  icon: string;
-  label: string;
+  icon: string;      // SVG string
+  label: string;     // Used for tooltip and aria-label
   variant?: 'default' | 'primary' | 'danger';
   disabled?: boolean;
   onClick: () => void;
@@ -1117,11 +1135,14 @@ function positionToolbar(
 interface BadgeProps {
   variant: 'default' | 'success' | 'warning' | 'error' | 'info';
   size: 'sm' | 'md';
-  icon?: string;
+  icon?: string;      // SVG string
   label: string;
   removable?: boolean;
   onRemove?: () => void;
 }
+
+// Factory function
+function createBadge(props: BadgeProps): HTMLElement;
 ```
 
 #### CSS
@@ -1234,14 +1255,24 @@ interface ToastProps {
   variant: 'success' | 'error' | 'warning' | 'info';
   title: string;
   description?: string;
-  duration?: number;      // ms, 0 for persistent
-  dismissible?: boolean;
+  duration?: number;      // ms, 0 for persistent (default: 5000)
+  dismissible?: boolean;  // Whether toast can be manually dismissed (default: true)
   action?: {
     label: string;
     onClick: () => void;
   };
+  onDismiss?: () => void; // Callback when toast is dismissed
 }
 
+// Toast class for individual toasts
+class Toast {
+  readonly id: string;
+  dismiss(): void;
+  mount(container: HTMLElement): void;
+  getElement(): HTMLDivElement;
+}
+
+// ToastManager for managing multiple toasts
 interface ToastManager {
   show(props: ToastProps): string;  // Returns toast ID
   dismiss(id: string): void;
@@ -1404,9 +1435,12 @@ interface ToastManager {
 ```typescript
 interface SpinnerProps {
   size: 'sm' | 'md' | 'lg';
-  color?: string;  // Defaults to primary
-  label?: string;  // Accessible label
+  color?: string;  // CSS color, defaults to currentColor (inherits)
+  label?: string;  // Accessible label for screen readers
 }
+
+// Factory function
+function createSpinner(props: SpinnerProps): HTMLElement;
 ```
 
 #### CSS
