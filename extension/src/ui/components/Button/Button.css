@@ -1,0 +1,386 @@
+/**
+ * Button Component Styles
+ *
+ * Comprehensive button styling with:
+ * - Multiple variants (primary, secondary, ghost, danger)
+ * - Three sizes (sm, md, lg)
+ * - States (default, hover, active, disabled, loading)
+ * - Icon support (left, right, icon-only)
+ * - Full width mode
+ * - Accessibility features (focus visible, minimum touch targets)
+ * - Dark mode support via design tokens
+ */
+
+/* Base Button Styles */
+.wc-button {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wc-icon-gap-sm);
+
+  /* Typography */
+  font-family: var(--wc-font-family-sans);
+  font-size: var(--wc-font-size-sm);
+  font-weight: var(--wc-font-weight-medium);
+  line-height: var(--wc-line-height-normal);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+
+  /* Border */
+  border: var(--wc-border-width-base) solid transparent;
+  border-radius: var(--wc-radius-button);
+
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  /* Transitions */
+  transition: var(--wc-transition-button);
+
+  /* Ensure minimum touch target for accessibility */
+  min-height: 2.75rem; /* 44px */
+  min-width: 2.75rem; /* 44px */
+}
+
+/* Remove default button styles (handled by reset, but ensuring consistency) */
+.wc-button::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* Focus Visible - Accessibility */
+.wc-button:focus-visible {
+  outline: 2px solid var(--wc-border-focus);
+  outline-offset: 2px;
+  box-shadow: var(--wc-shadow-focus);
+}
+
+/* Disabled State */
+.wc-button:disabled {
+  opacity: var(--wc-opacity-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading State */
+.wc-button--loading {
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* ============================================
+   SIZE VARIANTS
+   ============================================ */
+
+/* Small - 28px height (with padding) */
+.wc-button--sm {
+  min-height: 1.75rem; /* 28px */
+  padding: var(--wc-button-padding-y-sm) var(--wc-button-padding-x-sm);
+  font-size: var(--wc-font-size-xs);
+  gap: var(--wc-icon-gap-xs);
+}
+
+/* Medium (Default) - 36px height (with padding) */
+.wc-button--md {
+  min-height: 2.25rem; /* 36px */
+  padding: var(--wc-button-padding-y-base) var(--wc-button-padding-x-base);
+  font-size: var(--wc-font-size-sm);
+  gap: var(--wc-icon-gap-sm);
+}
+
+/* Large - 44px height (with padding) */
+.wc-button--lg {
+  min-height: 2.75rem; /* 44px */
+  padding: var(--wc-button-padding-y-lg) var(--wc-button-padding-x-lg);
+  font-size: var(--wc-font-size-base);
+  gap: var(--wc-icon-gap-base);
+}
+
+/* ============================================
+   ICON-ONLY VARIANT
+   ============================================ */
+
+.wc-button--icon-only {
+  padding: var(--wc-button-padding-y-base);
+  aspect-ratio: 1;
+}
+
+.wc-button--icon-only.wc-button--sm {
+  padding: var(--wc-button-padding-y-sm);
+  min-width: 1.75rem; /* 28px */
+}
+
+.wc-button--icon-only.wc-button--md {
+  padding: var(--wc-button-padding-y-base);
+  min-width: 2.25rem; /* 36px */
+}
+
+.wc-button--icon-only.wc-button--lg {
+  padding: var(--wc-button-padding-y-lg);
+  min-width: 2.75rem; /* 44px */
+}
+
+/* ============================================
+   FULL WIDTH VARIANT
+   ============================================ */
+
+.wc-button--full-width {
+  width: 100%;
+}
+
+/* ============================================
+   VARIANT STYLES
+   ============================================ */
+
+/* Primary Variant */
+.wc-button--primary {
+  color: var(--wc-text-inverse);
+  background-color: var(--wc-interactive-default);
+  border-color: var(--wc-interactive-default);
+}
+
+.wc-button--primary:hover:not(:disabled) {
+  background-color: var(--wc-interactive-hover);
+  border-color: var(--wc-interactive-hover);
+  box-shadow: var(--wc-shadow-button);
+}
+
+.wc-button--primary:active:not(:disabled) {
+  background-color: var(--wc-interactive-active);
+  border-color: var(--wc-interactive-active);
+  box-shadow: none;
+}
+
+/* Secondary Variant */
+.wc-button--secondary {
+  color: var(--wc-text-primary);
+  background-color: var(--wc-bg-secondary);
+  border-color: var(--wc-border-default);
+}
+
+.wc-button--secondary:hover:not(:disabled) {
+  background-color: var(--wc-bg-hover);
+  border-color: var(--wc-border-strong);
+  box-shadow: var(--wc-shadow-button);
+}
+
+.wc-button--secondary:active:not(:disabled) {
+  background-color: var(--wc-bg-active);
+  border-color: var(--wc-border-strong);
+  box-shadow: none;
+}
+
+/* Ghost Variant */
+.wc-button--ghost {
+  color: var(--wc-text-primary);
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.wc-button--ghost:hover:not(:disabled) {
+  background-color: var(--wc-bg-hover);
+  border-color: transparent;
+}
+
+.wc-button--ghost:active:not(:disabled) {
+  background-color: var(--wc-bg-active);
+  border-color: transparent;
+}
+
+/* Danger Variant */
+.wc-button--danger {
+  color: var(--wc-text-inverse);
+  background-color: var(--wc-error-600);
+  border-color: var(--wc-error-600);
+}
+
+.wc-button--danger:hover:not(:disabled) {
+  background-color: var(--wc-error-700);
+  border-color: var(--wc-error-700);
+  box-shadow: var(--wc-shadow-button);
+}
+
+.wc-button--danger:active:not(:disabled) {
+  background-color: var(--wc-error-800);
+  border-color: var(--wc-error-800);
+  box-shadow: none;
+}
+
+/* Danger variant focus ring */
+.wc-button--danger:focus-visible {
+  box-shadow: var(--wc-shadow-focus-error);
+}
+
+/* ============================================
+   BUTTON CONTENT ELEMENTS
+   ============================================ */
+
+/* Button Text */
+.wc-button__text {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Button Icons */
+.wc-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wc-button__icon svg {
+  display: block;
+  width: var(--wc-icon-size-sm);
+  height: var(--wc-icon-size-sm);
+}
+
+/* Icon sizes based on button size */
+.wc-button--sm .wc-button__icon svg {
+  width: var(--wc-icon-size-xs);
+  height: var(--wc-icon-size-xs);
+}
+
+.wc-button--md .wc-button__icon svg {
+  width: var(--wc-icon-size-sm);
+  height: var(--wc-icon-size-sm);
+}
+
+.wc-button--lg .wc-button__icon svg {
+  width: var(--wc-icon-size-base);
+  height: var(--wc-icon-size-base);
+}
+
+/* Icon-only buttons should have centered icon */
+.wc-button--icon-only .wc-button__icon svg {
+  margin: 0;
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
+.wc-button__spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wc-button__spinner-svg {
+  width: var(--wc-icon-size-sm);
+  height: var(--wc-icon-size-sm);
+  animation: wc-spin var(--wc-animation-spin) linear infinite;
+}
+
+.wc-button--sm .wc-button__spinner-svg {
+  width: var(--wc-icon-size-xs);
+  height: var(--wc-icon-size-xs);
+}
+
+.wc-button--md .wc-button__spinner-svg {
+  width: var(--wc-icon-size-sm);
+  height: var(--wc-icon-size-sm);
+}
+
+.wc-button--lg .wc-button__spinner-svg {
+  width: var(--wc-icon-size-base);
+  height: var(--wc-icon-size-base);
+}
+
+.wc-button__spinner-circle {
+  opacity: 0.25;
+}
+
+.wc-button__spinner-path {
+  opacity: 0.75;
+}
+
+/* ============================================
+   DARK MODE ADJUSTMENTS
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  /* Secondary variant needs better contrast in dark mode */
+  .wc-button--secondary {
+    background-color: var(--wc-bg-tertiary);
+  }
+
+  .wc-button--secondary:hover:not(:disabled) {
+    background-color: var(--wc-bg-hover);
+  }
+
+  /* Ghost variant slight background in dark mode for better visibility */
+  .wc-button--ghost:hover:not(:disabled) {
+    background-color: var(--wc-bg-hover);
+  }
+
+  /* Danger variant adjustments for dark mode */
+  .wc-button--danger {
+    background-color: var(--wc-error-500);
+    border-color: var(--wc-error-500);
+  }
+
+  .wc-button--danger:hover:not(:disabled) {
+    background-color: var(--wc-error-400);
+    border-color: var(--wc-error-400);
+  }
+
+  .wc-button--danger:active:not(:disabled) {
+    background-color: var(--wc-error-300);
+    border-color: var(--wc-error-300);
+  }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .wc-button {
+    transition: none;
+  }
+
+  .wc-button__spinner-svg {
+    animation: none;
+  }
+}
+
+/* ============================================
+   HIGH CONTRAST MODE
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  .wc-button {
+    border-width: var(--wc-border-width-medium);
+  }
+
+  .wc-button--ghost {
+    border-color: currentColor;
+  }
+
+  .wc-button:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+
+/* Ensure touch targets are large enough on mobile */
+@media (pointer: coarse) {
+  .wc-button {
+    min-height: 2.75rem; /* 44px - iOS minimum touch target */
+    min-width: 2.75rem;
+  }
+
+  .wc-button--sm {
+    min-height: 2.5rem; /* 40px */
+    min-width: 2.5rem;
+  }
+}

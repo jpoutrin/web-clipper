@@ -1,0 +1,320 @@
+/**
+ * Dialog Component Styles
+ *
+ * Modal dialog with backdrop, variants, and animations.
+ * Uses design tokens for consistency.
+ */
+
+/* Import design tokens */
+@import '../../tokens/index.css';
+
+/* Dialog Container - Fixed positioning */
+.wc-dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.wc-dialog-container * {
+  box-sizing: border-box;
+}
+
+/* Backdrop - Semi-transparent overlay */
+.wc-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--wc-bg-overlay);
+  opacity: 0;
+  transition: var(--wc-transition-fade);
+  pointer-events: none;
+}
+
+.wc-dialog-backdrop-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Dialog - Main container */
+.wc-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  max-width: 400px;
+  width: calc(100% - var(--wc-space-8));
+  max-height: calc(100vh - var(--wc-space-16));
+  overflow-y: auto;
+  background-color: var(--wc-surface-elevated);
+  border-radius: var(--wc-space-3);
+  box-shadow: var(--wc-shadow-modal);
+  padding: var(--wc-component-padding-lg);
+  opacity: 0;
+  transition: var(--wc-transition-modal);
+  pointer-events: none;
+  font-family: var(--wc-font-family-sans);
+}
+
+.wc-dialog-open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Close Button */
+.wc-dialog-close {
+  position: absolute;
+  top: var(--wc-space-4);
+  right: var(--wc-space-4);
+  width: var(--wc-space-8);
+  height: var(--wc-space-8);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--wc-space-1);
+  color: var(--wc-text-secondary);
+  cursor: pointer;
+  transition: var(--wc-transition-button);
+}
+
+.wc-dialog-close:hover {
+  background-color: var(--wc-bg-hover);
+  color: var(--wc-text-primary);
+}
+
+.wc-dialog-close:focus-visible {
+  outline: none;
+  box-shadow: var(--wc-shadow-focus);
+}
+
+/* Dialog Header */
+.wc-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wc-space-3);
+  margin-bottom: var(--wc-space-4);
+}
+
+/* Dialog Icon */
+.wc-dialog-icon {
+  flex-shrink: 0;
+  width: var(--wc-space-12);
+  height: var(--wc-space-12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.wc-dialog-icon svg {
+  width: var(--wc-space-6);
+  height: var(--wc-space-6);
+}
+
+/* Icon variants */
+.wc-dialog-default .wc-dialog-icon {
+  background-color: var(--wc-primary-100);
+  color: var(--wc-primary-700);
+}
+
+.wc-dialog-success .wc-dialog-icon {
+  background-color: var(--wc-success-100);
+  color: var(--wc-success-700);
+}
+
+.wc-dialog-warning .wc-dialog-icon {
+  background-color: var(--wc-warning-100);
+  color: var(--wc-warning-700);
+}
+
+.wc-dialog-error .wc-dialog-icon {
+  background-color: var(--wc-error-100);
+  color: var(--wc-error-700);
+}
+
+/* Dark mode icon variants */
+@media (prefers-color-scheme: dark) {
+  .wc-dialog-default .wc-dialog-icon {
+    background-color: var(--wc-primary-900);
+    color: var(--wc-primary-300);
+  }
+
+  .wc-dialog-success .wc-dialog-icon {
+    background-color: var(--wc-success-900);
+    color: var(--wc-success-300);
+  }
+
+  .wc-dialog-warning .wc-dialog-icon {
+    background-color: var(--wc-warning-900);
+    color: var(--wc-warning-300);
+  }
+
+  .wc-dialog-error .wc-dialog-icon {
+    background-color: var(--wc-error-900);
+    color: var(--wc-error-300);
+  }
+}
+
+/* Dialog Title */
+.wc-dialog-title {
+  margin: 0;
+  font-size: var(--wc-heading-4-size);
+  font-weight: var(--wc-heading-4-weight);
+  line-height: var(--wc-heading-4-line-height);
+  color: var(--wc-text-primary);
+}
+
+/* Dialog Description */
+.wc-dialog-description {
+  margin: 0;
+  margin-bottom: var(--wc-space-6);
+  font-size: var(--wc-body-sm-size);
+  line-height: var(--wc-body-sm-line-height);
+  color: var(--wc-text-secondary);
+}
+
+/* Dialog Actions */
+.wc-dialog-actions {
+  display: flex;
+  gap: var(--wc-space-3);
+  justify-content: flex-end;
+  margin-top: var(--wc-space-6);
+}
+
+/* Dialog Buttons */
+.wc-dialog-button {
+  padding: var(--wc-button-padding-y-base) var(--wc-button-padding-x-base);
+  font-size: var(--wc-body-sm-size);
+  font-weight: var(--wc-font-weight-medium);
+  line-height: var(--wc-line-height-normal);
+  border-radius: var(--wc-space-2);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--wc-transition-button);
+  white-space: nowrap;
+}
+
+.wc-dialog-button:focus-visible {
+  outline: none;
+  box-shadow: var(--wc-shadow-focus);
+}
+
+.wc-dialog-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary Button */
+.wc-dialog-button-primary {
+  background-color: var(--wc-interactive-default);
+  color: white;
+  border-color: var(--wc-interactive-default);
+}
+
+.wc-dialog-button-primary:hover:not(:disabled) {
+  background-color: var(--wc-interactive-hover);
+  border-color: var(--wc-interactive-hover);
+}
+
+.wc-dialog-button-primary:active:not(:disabled) {
+  background-color: var(--wc-interactive-active);
+  border-color: var(--wc-interactive-active);
+}
+
+/* Secondary Button */
+.wc-dialog-button-secondary {
+  background-color: var(--wc-bg-primary);
+  color: var(--wc-text-primary);
+  border-color: var(--wc-border-default);
+}
+
+.wc-dialog-button-secondary:hover:not(:disabled) {
+  background-color: var(--wc-bg-hover);
+  border-color: var(--wc-border-strong);
+}
+
+.wc-dialog-button-secondary:active:not(:disabled) {
+  background-color: var(--wc-bg-active);
+}
+
+/* Danger Button */
+.wc-dialog-button-danger {
+  background-color: var(--wc-error-600);
+  color: white;
+  border-color: var(--wc-error-600);
+}
+
+.wc-dialog-button-danger:hover:not(:disabled) {
+  background-color: var(--wc-error-700);
+  border-color: var(--wc-error-700);
+}
+
+.wc-dialog-button-danger:active:not(:disabled) {
+  background-color: var(--wc-error-800);
+  border-color: var(--wc-error-800);
+}
+
+.wc-dialog-button-danger:focus-visible {
+  box-shadow: var(--wc-shadow-focus-error);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .wc-dialog {
+    max-width: calc(100% - var(--wc-space-4));
+    padding: var(--wc-component-padding-base);
+  }
+
+  .wc-dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .wc-dialog-button {
+    width: 100%;
+  }
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .wc-dialog-backdrop,
+  .wc-dialog {
+    transition: none;
+  }
+
+  .wc-dialog {
+    transform: translate(-50%, -50%);
+  }
+
+  .wc-dialog-open {
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Scrollbar styling for dialog content */
+.wc-dialog::-webkit-scrollbar {
+  width: var(--wc-space-2);
+}
+
+.wc-dialog::-webkit-scrollbar-track {
+  background: var(--wc-bg-secondary);
+  border-radius: var(--wc-space-1);
+}
+
+.wc-dialog::-webkit-scrollbar-thumb {
+  background: var(--wc-border-default);
+  border-radius: var(--wc-space-1);
+}
+
+.wc-dialog::-webkit-scrollbar-thumb:hover {
+  background: var(--wc-border-strong);
+}

@@ -1,0 +1,133 @@
+/**
+ * Web Clipper - Typography Tokens
+ *
+ * Font families, sizes, weights, line heights, and letter spacing.
+ * Uses :host, :root for Shadow DOM compatibility.
+ */
+
+:host, :root {
+  /* Font Families */
+  --wc-font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --wc-font-family-mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier',
+    monospace;
+
+  /* Font Sizes */
+  --wc-font-size-xs: 0.75rem;      /* 12px */
+  --wc-font-size-sm: 0.875rem;     /* 14px */
+  --wc-font-size-base: 1rem;       /* 16px */
+  --wc-font-size-lg: 1.125rem;     /* 18px */
+  --wc-font-size-xl: 1.25rem;      /* 20px */
+  --wc-font-size-2xl: 1.5rem;      /* 24px */
+  --wc-font-size-3xl: 1.875rem;    /* 30px */
+  --wc-font-size-4xl: 2.25rem;     /* 36px */
+  --wc-font-size-5xl: 3rem;        /* 48px */
+
+  /* Font Weights */
+  --wc-font-weight-thin: 100;
+  --wc-font-weight-extralight: 200;
+  --wc-font-weight-light: 300;
+  --wc-font-weight-normal: 400;
+  --wc-font-weight-medium: 500;
+  --wc-font-weight-semibold: 600;
+  --wc-font-weight-bold: 700;
+  --wc-font-weight-extrabold: 800;
+  --wc-font-weight-black: 900;
+
+  /* Line Heights */
+  --wc-line-height-none: 1;
+  --wc-line-height-tight: 1.25;
+  --wc-line-height-snug: 1.375;
+  --wc-line-height-normal: 1.5;
+  --wc-line-height-relaxed: 1.625;
+  --wc-line-height-loose: 2;
+
+  /* Letter Spacing */
+  --wc-letter-spacing-tighter: -0.05em;
+  --wc-letter-spacing-tight: -0.025em;
+  --wc-letter-spacing-normal: 0em;
+  --wc-letter-spacing-wide: 0.025em;
+  --wc-letter-spacing-wider: 0.05em;
+  --wc-letter-spacing-widest: 0.1em;
+
+  /* Typography Presets */
+
+  /* Headings */
+  --wc-heading-1-size: var(--wc-font-size-4xl);
+  --wc-heading-1-weight: var(--wc-font-weight-bold);
+  --wc-heading-1-line-height: var(--wc-line-height-tight);
+  --wc-heading-1-letter-spacing: var(--wc-letter-spacing-tight);
+
+  --wc-heading-2-size: var(--wc-font-size-3xl);
+  --wc-heading-2-weight: var(--wc-font-weight-bold);
+  --wc-heading-2-line-height: var(--wc-line-height-tight);
+  --wc-heading-2-letter-spacing: var(--wc-letter-spacing-tight);
+
+  --wc-heading-3-size: var(--wc-font-size-2xl);
+  --wc-heading-3-weight: var(--wc-font-weight-semibold);
+  --wc-heading-3-line-height: var(--wc-line-height-snug);
+  --wc-heading-3-letter-spacing: var(--wc-letter-spacing-normal);
+
+  --wc-heading-4-size: var(--wc-font-size-xl);
+  --wc-heading-4-weight: var(--wc-font-weight-semibold);
+  --wc-heading-4-line-height: var(--wc-line-height-snug);
+  --wc-heading-4-letter-spacing: var(--wc-letter-spacing-normal);
+
+  --wc-heading-5-size: var(--wc-font-size-lg);
+  --wc-heading-5-weight: var(--wc-font-weight-medium);
+  --wc-heading-5-line-height: var(--wc-line-height-normal);
+  --wc-heading-5-letter-spacing: var(--wc-letter-spacing-normal);
+
+  --wc-heading-6-size: var(--wc-font-size-base);
+  --wc-heading-6-weight: var(--wc-font-weight-medium);
+  --wc-heading-6-line-height: var(--wc-line-height-normal);
+  --wc-heading-6-letter-spacing: var(--wc-letter-spacing-normal);
+
+  /* Body Text */
+  --wc-body-lg-size: var(--wc-font-size-lg);
+  --wc-body-lg-weight: var(--wc-font-weight-normal);
+  --wc-body-lg-line-height: var(--wc-line-height-relaxed);
+
+  --wc-body-base-size: var(--wc-font-size-base);
+  --wc-body-base-weight: var(--wc-font-weight-normal);
+  --wc-body-base-line-height: var(--wc-line-height-normal);
+
+  --wc-body-sm-size: var(--wc-font-size-sm);
+  --wc-body-sm-weight: var(--wc-font-weight-normal);
+  --wc-body-sm-line-height: var(--wc-line-height-normal);
+
+  --wc-body-xs-size: var(--wc-font-size-xs);
+  --wc-body-xs-weight: var(--wc-font-weight-normal);
+  --wc-body-xs-line-height: var(--wc-line-height-normal);
+
+  /* Labels & UI Text */
+  --wc-label-lg-size: var(--wc-font-size-base);
+  --wc-label-lg-weight: var(--wc-font-weight-medium);
+  --wc-label-lg-line-height: var(--wc-line-height-normal);
+
+  --wc-label-base-size: var(--wc-font-size-sm);
+  --wc-label-base-weight: var(--wc-font-weight-medium);
+  --wc-label-base-line-height: var(--wc-line-height-normal);
+
+  --wc-label-sm-size: var(--wc-font-size-xs);
+  --wc-label-sm-weight: var(--wc-font-weight-medium);
+  --wc-label-sm-line-height: var(--wc-line-height-normal);
+
+  /* Code & Monospace */
+  --wc-code-size: var(--wc-font-size-sm);
+  --wc-code-weight: var(--wc-font-weight-normal);
+  --wc-code-line-height: var(--wc-line-height-normal);
+  --wc-code-family: var(--wc-font-family-mono);
+
+  /* Caption Text */
+  --wc-caption-size: var(--wc-font-size-xs);
+  --wc-caption-weight: var(--wc-font-weight-normal);
+  --wc-caption-line-height: var(--wc-line-height-normal);
+
+  /* Overline/Eyebrow Text */
+  --wc-overline-size: var(--wc-font-size-xs);
+  --wc-overline-weight: var(--wc-font-weight-semibold);
+  --wc-overline-line-height: var(--wc-line-height-normal);
+  --wc-overline-letter-spacing: var(--wc-letter-spacing-wider);
+  --wc-overline-transform: uppercase;
+}

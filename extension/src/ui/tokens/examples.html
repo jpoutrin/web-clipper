@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Clipper Design Tokens - Examples</title>
+  <link rel="stylesheet" href="./index.css">
+  <style>
+    body {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--wc-space-8);
+    }
+
+    .section {
+      margin-bottom: var(--wc-section-spacing-lg);
+    }
+
+    .section-title {
+      font-size: var(--wc-heading-2-size);
+      font-weight: var(--wc-heading-2-weight);
+      line-height: var(--wc-heading-2-line-height);
+      margin-bottom: var(--wc-space-6);
+      color: var(--wc-text-primary);
+      border-bottom: 2px solid var(--wc-border-default);
+      padding-bottom: var(--wc-space-3);
+    }
+
+    .subsection-title {
+      font-size: var(--wc-heading-4-size);
+      font-weight: var(--wc-heading-4-weight);
+      margin-bottom: var(--wc-space-4);
+      color: var(--wc-text-primary);
+    }
+
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: var(--wc-space-4);
+      margin-bottom: var(--wc-space-6);
+    }
+
+    .color-swatch {
+      padding: var(--wc-space-4);
+      border-radius: var(--wc-radius-lg);
+      border: 1px solid var(--wc-border-subtle);
+    }
+
+    .color-box {
+      height: 80px;
+      border-radius: var(--wc-radius-base);
+      margin-bottom: var(--wc-space-2);
+    }
+
+    .color-label {
+      font-size: var(--wc-font-size-sm);
+      font-weight: var(--wc-font-weight-medium);
+      color: var(--wc-text-secondary);
+    }
+
+    /* Button Examples */
+    .button {
+      padding: var(--wc-button-padding-y-base) var(--wc-button-padding-x-base);
+      font-size: var(--wc-font-size-base);
+      font-weight: var(--wc-font-weight-medium);
+      border-radius: var(--wc-radius-button);
+      border: none;
+      cursor: pointer;
+      transition: var(--wc-transition-button);
+    }
+
+    .button-primary {
+      background-color: var(--wc-interactive-default);
+      color: var(--wc-text-inverse);
+    }
+
+    .button-primary:hover {
+      background-color: var(--wc-interactive-hover);
+    }
+
+    .button-secondary {
+      background-color: var(--wc-bg-secondary);
+      color: var(--wc-text-primary);
+      border: 1px solid var(--wc-border-default);
+    }
+
+    .button-secondary:hover {
+      background-color: var(--wc-bg-hover);
+    }
+
+    .button-success {
+      background-color: var(--wc-success-600);
+      color: white;
+    }
+
+    .button-warning {
+      background-color: var(--wc-warning-600);
+      color: white;
+    }
+
+    .button-error {
+      background-color: var(--wc-error-600);
+      color: white;
+    }
+
+    .button-sm {
+      padding: var(--wc-button-padding-y-sm) var(--wc-button-padding-x-sm);
+      font-size: var(--wc-font-size-sm);
+    }
+
+    .button-lg {
+      padding: var(--wc-button-padding-y-lg) var(--wc-button-padding-x-lg);
+      font-size: var(--wc-font-size-lg);
+    }
+
+    /* Card Examples */
+    .card {
+      padding: var(--wc-component-padding-lg);
+      background-color: var(--wc-surface-elevated);
+      border-radius: var(--wc-radius-card);
+      box-shadow: var(--wc-shadow-card);
+      border: 1px solid var(--wc-border-subtle);
+      transition: var(--wc-transition-card);
+    }
+
+    .card:hover {
+      box-shadow: var(--wc-shadow-card-hover);
+    }
+
+    .card-title {
+      font-size: var(--wc-heading-5-size);
+      font-weight: var(--wc-heading-5-weight);
+      margin-bottom: var(--wc-space-2);
+    }
+
+    .card-description {
+      font-size: var(--wc-body-sm-size);
+      color: var(--wc-text-secondary);
+    }
+
+    /* Typography Examples */
+    .type-scale {
+      display: flex;
+      flex-direction: column;
+      gap: var(--wc-space-4);
+    }
+
+    .type-example {
+      border-bottom: 1px solid var(--wc-border-subtle);
+      padding-bottom: var(--wc-space-2);
+    }
+
+    .type-label {
+      font-size: var(--wc-font-size-xs);
+      color: var(--wc-text-tertiary);
+      margin-bottom: var(--wc-space-1);
+    }
+
+    /* Shadow Examples */
+    .shadow-box {
+      padding: var(--wc-space-6);
+      background-color: var(--wc-bg-primary);
+      border-radius: var(--wc-radius-lg);
+      text-align: center;
+      font-size: var(--wc-font-size-sm);
+    }
+
+    /* Spacing Examples */
+    .spacing-example {
+      display: flex;
+      align-items: center;
+      gap: var(--wc-space-2);
+      margin-bottom: var(--wc-space-2);
+    }
+
+    .spacing-box {
+      background-color: var(--wc-primary-200);
+      border: 1px solid var(--wc-primary-500);
+    }
+
+    /* Animation Examples */
+    .animation-demo {
+      display: inline-block;
+      padding: var(--wc-space-4) var(--wc-space-6);
+      background-color: var(--wc-primary-100);
+      border-radius: var(--wc-radius-lg);
+      cursor: pointer;
+      transition: var(--wc-transition-all);
+    }
+
+    .animation-demo:hover {
+      transform: scale(1.05);
+      background-color: var(--wc-primary-200);
+    }
+
+    .spin-demo {
+      animation: wc-spin var(--wc-animation-spin) linear infinite;
+    }
+
+    .pulse-demo {
+      animation: wc-pulse var(--wc-animation-pulse) ease-in-out infinite;
+    }
+
+    .button-group {
+      display: flex;
+      gap: var(--wc-inline-gap-base);
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="font-size: var(--wc-heading-1-size); font-weight: var(--wc-heading-1-weight); margin-bottom: var(--wc-space-8);">
+    Web Clipper Design Tokens
+  </h1>
+
+  <!-- Colors Section -->
+  <section class="section">
+    <h2 class="section-title">Colors</h2>
+
+    <h3 class="subsection-title">Primary Colors</h3>
+    <div class="example-grid">
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-primary-500);"></div>
+        <div class="color-label">Primary 500</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-primary-600);"></div>
+        <div class="color-label">Primary 600</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-primary-700);"></div>
+        <div class="color-label">Primary 700</div>
+      </div>
+    </div>
+
+    <h3 class="subsection-title">Semantic Colors</h3>
+    <div class="example-grid">
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-success-600);"></div>
+        <div class="color-label">Success</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-warning-600);"></div>
+        <div class="color-label">Warning</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-error-600);"></div>
+        <div class="color-label">Error</div>
+      </div>
+    </div>
+
+    <h3 class="subsection-title">Text & Background</h3>
+    <div class="example-grid">
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-text-primary);"></div>
+        <div class="color-label">Text Primary</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-text-secondary);"></div>
+        <div class="color-label">Text Secondary</div>
+      </div>
+      <div class="color-swatch">
+        <div class="color-box" style="background-color: var(--wc-bg-secondary); border: 1px solid var(--wc-border-default);"></div>
+        <div class="color-label">BG Secondary</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Typography Section -->
+  <section class="section">
+    <h2 class="section-title">Typography</h2>
+
+    <div class="type-scale">
+      <div class="type-example">
+        <div class="type-label">Heading 1</div>
+        <h1 style="font-size: var(--wc-heading-1-size); font-weight: var(--wc-heading-1-weight); line-height: var(--wc-heading-1-line-height);">
+          The quick brown fox
+        </h1>
+      </div>
+      <div class="type-example">
+        <div class="type-label">Heading 2</div>
+        <h2 style="font-size: var(--wc-heading-2-size); font-weight: var(--wc-heading-2-weight); line-height: var(--wc-heading-2-line-height);">
+          The quick brown fox
+        </h2>
+      </div>
+      <div class="type-example">
+        <div class="type-label">Heading 3</div>
+        <h3 style="font-size: var(--wc-heading-3-size); font-weight: var(--wc-heading-3-weight); line-height: var(--wc-heading-3-line-height);">
+          The quick brown fox
+        </h3>
+      </div>
+      <div class="type-example">
+        <div class="type-label">Body Large</div>
+        <p style="font-size: var(--wc-body-lg-size); line-height: var(--wc-body-lg-line-height);">
+          The quick brown fox jumps over the lazy dog.
+        </p>
+      </div>
+      <div class="type-example">
+        <div class="type-label">Body Base</div>
+        <p style="font-size: var(--wc-body-base-size); line-height: var(--wc-body-base-line-height);">
+          The quick brown fox jumps over the lazy dog.
+        </p>
+      </div>
+      <div class="type-example">
+        <div class="type-label">Body Small</div>
+        <p style="font-size: var(--wc-body-sm-size); line-height: var(--wc-body-sm-line-height);">
+          The quick brown fox jumps over the lazy dog.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Buttons Section -->
+  <section class="section">
+    <h2 class="section-title">Buttons</h2>
+
+    <h3 class="subsection-title">Variants</h3>
+    <div class="button-group">
+      <button class="button button-primary">Primary</button>
+      <button class="button button-secondary">Secondary</button>
+      <button class="button button-success">Success</button>
+      <button class="button button-warning">Warning</button>
+      <button class="button button-error">Error</button>
+    </div>
+
+    <h3 class="subsection-title">Sizes</h3>
+    <div class="button-group">
+      <button class="button button-primary button-sm">Small</button>
+      <button class="button button-primary">Base</button>
+      <button class="button button-primary button-lg">Large</button>
+    </div>
+  </section>
+
+  <!-- Cards Section -->
+  <section class="section">
+    <h2 class="section-title">Cards</h2>
+
+    <div class="example-grid">
+      <div class="card">
+        <div class="card-title">Card Title</div>
+        <div class="card-description">
+          This is a card component using design tokens. Hover to see the shadow effect.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Another Card</div>
+        <div class="card-description">
+          Cards automatically adapt to dark mode using semantic color tokens.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Third Card</div>
+        <div class="card-description">
+          Consistent spacing and typography across all cards.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shadows Section -->
+  <section class="section">
+    <h2 class="section-title">Shadows</h2>
+
+    <div class="example-grid">
+      <div class="shadow-box" style="box-shadow: var(--wc-shadow-sm);">
+        Shadow SM
+      </div>
+      <div class="shadow-box" style="box-shadow: var(--wc-shadow-base);">
+        Shadow Base
+      </div>
+      <div class="shadow-box" style="box-shadow: var(--wc-shadow-md);">
+        Shadow MD
+      </div>
+      <div class="shadow-box" style="box-shadow: var(--wc-shadow-lg);">
+        Shadow LG
+      </div>
+      <div class="shadow-box" style="box-shadow: var(--wc-shadow-xl);">
+        Shadow XL
+      </div>
+    </div>
+  </section>
+
+  <!-- Spacing Section -->
+  <section class="section">
+    <h2 class="section-title">Spacing</h2>
+
+    <div style="margin-bottom: var(--wc-space-6);">
+      <div class="spacing-example">
+        <span style="width: 100px; font-size: var(--wc-font-size-sm);">space-2 (8px)</span>
+        <div class="spacing-box" style="width: var(--wc-space-2); height: 24px;"></div>
+      </div>
+      <div class="spacing-example">
+        <span style="width: 100px; font-size: var(--wc-font-size-sm);">space-4 (16px)</span>
+        <div class="spacing-box" style="width: var(--wc-space-4); height: 24px;"></div>
+      </div>
+      <div class="spacing-example">
+        <span style="width: 100px; font-size: var(--wc-font-size-sm);">space-6 (24px)</span>
+        <div class="spacing-box" style="width: var(--wc-space-6); height: 24px;"></div>
+      </div>
+      <div class="spacing-example">
+        <span style="width: 100px; font-size: var(--wc-font-size-sm);">space-8 (32px)</span>
+        <div class="spacing-box" style="width: var(--wc-space-8); height: 24px;"></div>
+      </div>
+      <div class="spacing-example">
+        <span style="width: 100px; font-size: var(--wc-font-size-sm);">space-12 (48px)</span>
+        <div class="spacing-box" style="width: var(--wc-space-12); height: 24px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Animations Section -->
+  <section class="section">
+    <h2 class="section-title">Animations</h2>
+
+    <h3 class="subsection-title">Hover Effects</h3>
+    <div class="button-group">
+      <div class="animation-demo">Hover me</div>
+      <div class="animation-demo">Smooth transition</div>
+    </div>
+
+    <h3 class="subsection-title">Keyframe Animations</h3>
+    <div class="button-group">
+      <div class="animation-demo spin-demo" style="width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">↻</div>
+      <div class="animation-demo pulse-demo">Pulsing</div>
+    </div>
+  </section>
+
+  <footer style="margin-top: var(--wc-space-16); padding-top: var(--wc-space-8); border-top: 1px solid var(--wc-border-default); text-align: center; color: var(--wc-text-secondary); font-size: var(--wc-font-size-sm);">
+    <p>Web Clipper Design Tokens - All tokens automatically adapt to dark mode</p>
+  </footer>
+</body>
+</html>

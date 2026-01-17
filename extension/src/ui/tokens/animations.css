@@ -1,0 +1,222 @@
+/**
+ * Web Clipper - Animation Tokens
+ *
+ * Duration, easing functions, and reduced motion support.
+ * Uses :host, :root for Shadow DOM compatibility.
+ */
+
+:host, :root {
+  /* Duration */
+  --wc-duration-instant: 0ms;
+  --wc-duration-fast: 150ms;
+  --wc-duration-base: 200ms;
+  --wc-duration-medium: 300ms;
+  --wc-duration-slow: 500ms;
+  --wc-duration-slower: 700ms;
+
+  /* Easing Functions */
+  --wc-ease-linear: linear;
+  --wc-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --wc-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --wc-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --wc-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --wc-ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+
+  /* Semantic Animation Presets */
+  --wc-transition-fade: opacity var(--wc-duration-base) var(--wc-ease-in-out);
+  --wc-transition-slide: transform var(--wc-duration-base) var(--wc-ease-out);
+  --wc-transition-scale: transform var(--wc-duration-fast) var(--wc-ease-out);
+  --wc-transition-color: color var(--wc-duration-fast) var(--wc-ease-in-out),
+                         background-color var(--wc-duration-fast) var(--wc-ease-in-out),
+                         border-color var(--wc-duration-fast) var(--wc-ease-in-out);
+  --wc-transition-shadow: box-shadow var(--wc-duration-fast) var(--wc-ease-in-out);
+  --wc-transition-all: all var(--wc-duration-base) var(--wc-ease-in-out);
+
+  /* Component-Specific Transitions */
+  --wc-transition-button: background-color var(--wc-duration-fast) var(--wc-ease-in-out),
+                          border-color var(--wc-duration-fast) var(--wc-ease-in-out),
+                          color var(--wc-duration-fast) var(--wc-ease-in-out),
+                          box-shadow var(--wc-duration-fast) var(--wc-ease-in-out);
+
+  --wc-transition-input: border-color var(--wc-duration-fast) var(--wc-ease-in-out),
+                         box-shadow var(--wc-duration-fast) var(--wc-ease-in-out);
+
+  --wc-transition-modal: opacity var(--wc-duration-base) var(--wc-ease-out),
+                         transform var(--wc-duration-base) var(--wc-ease-out);
+
+  --wc-transition-dropdown: opacity var(--wc-duration-fast) var(--wc-ease-out),
+                            transform var(--wc-duration-fast) var(--wc-ease-out);
+
+  --wc-transition-tooltip: opacity var(--wc-duration-fast) var(--wc-ease-in-out);
+
+  --wc-transition-card: box-shadow var(--wc-duration-base) var(--wc-ease-in-out),
+                        transform var(--wc-duration-base) var(--wc-ease-in-out);
+
+  /* Keyframe Animation Durations */
+  --wc-animation-spin: 1s;
+  --wc-animation-pulse: 2s;
+  --wc-animation-bounce: 1s;
+  --wc-animation-ping: 1s;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  :host, :root {
+    /* Disable all animations and transitions */
+    --wc-duration-instant: 0ms;
+    --wc-duration-fast: 0ms;
+    --wc-duration-base: 0ms;
+    --wc-duration-medium: 0ms;
+    --wc-duration-slow: 0ms;
+    --wc-duration-slower: 0ms;
+
+    --wc-transition-fade: none;
+    --wc-transition-slide: none;
+    --wc-transition-scale: none;
+    --wc-transition-color: none;
+    --wc-transition-shadow: none;
+    --wc-transition-all: none;
+    --wc-transition-button: none;
+    --wc-transition-input: none;
+    --wc-transition-modal: none;
+    --wc-transition-dropdown: none;
+    --wc-transition-tooltip: none;
+    --wc-transition-card: none;
+
+    --wc-animation-spin: 0s;
+    --wc-animation-pulse: 0s;
+    --wc-animation-bounce: 0s;
+    --wc-animation-ping: 0s;
+  }
+
+  /* Global animation disable */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Common Keyframe Animations */
+@keyframes wc-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wc-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes wc-bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+@keyframes wc-ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes wc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wc-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes wc-slide-in-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes wc-slide-in-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes wc-slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes wc-slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes wc-scale-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes wc-scale-out {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}

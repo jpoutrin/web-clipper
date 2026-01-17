@@ -1,0 +1,77 @@
+/**
+ * Web Clipper - Shadow Tokens
+ *
+ * Elevation shadows with dark mode variants.
+ * Uses :host, :root for Shadow DOM compatibility.
+ */
+
+:host, :root {
+  /* Shadow Levels - Light Mode */
+  --wc-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --wc-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+                  0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --wc-shadow-base: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --wc-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                  0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --wc-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                  0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --wc-shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --wc-shadow-2xl: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+
+  /* Special Shadows */
+  --wc-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  --wc-shadow-none: none;
+
+  /* Focus Ring */
+  --wc-shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  --wc-shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.5);
+  --wc-shadow-focus-success: 0 0 0 3px rgba(34, 197, 94, 0.5);
+
+  /* Semantic Shadow Aliases */
+  --wc-shadow-card: var(--wc-shadow-base);
+  --wc-shadow-card-hover: var(--wc-shadow-md);
+  --wc-shadow-dropdown: var(--wc-shadow-lg);
+  --wc-shadow-modal: var(--wc-shadow-xl);
+  --wc-shadow-popover: var(--wc-shadow-md);
+  --wc-shadow-tooltip: var(--wc-shadow-sm);
+  --wc-shadow-button: var(--wc-shadow-sm);
+  --wc-shadow-input: var(--wc-shadow-xs);
+}
+
+/* Dark Mode Shadow Variants */
+@media (prefers-color-scheme: dark) {
+  :host, :root {
+    /* Stronger shadows for dark mode to create elevation */
+    --wc-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --wc-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4),
+                    0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    --wc-shadow-base: 0 4px 6px -1px rgba(0, 0, 0, 0.4),
+                      0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --wc-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4),
+                    0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --wc-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
+                    0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    --wc-shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    --wc-shadow-2xl: 0 35px 60px -15px rgba(0, 0, 0, 0.7);
+
+    --wc-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+
+    /* Adjusted focus rings for dark mode */
+    --wc-shadow-focus: 0 0 0 3px rgba(96, 165, 250, 0.6);
+    --wc-shadow-focus-error: 0 0 0 3px rgba(248, 113, 113, 0.6);
+    --wc-shadow-focus-success: 0 0 0 3px rgba(74, 222, 128, 0.6);
+  }
+}
+
+/* Utility: Combined shadow with border (for cards in dark mode) */
+:host, :root {
+  --wc-shadow-card-bordered: var(--wc-shadow-card);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host, :root {
+    --wc-shadow-card-bordered: var(--wc-shadow-card),
+                               0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+}

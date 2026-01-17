@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toast Component - Web Clipper</title>
+
+  <!-- Design Tokens -->
+  <link rel="stylesheet" href="../../tokens/reset.css">
+  <link rel="stylesheet" href="../../tokens/colors.css">
+  <link rel="stylesheet" href="../../tokens/spacing.css">
+  <link rel="stylesheet" href="../../tokens/shadows.css">
+  <link rel="stylesheet" href="../../tokens/animations.css">
+  <link rel="stylesheet" href="../../tokens/typography.css">
+
+  <!-- Toast Component -->
+  <link rel="stylesheet" href="./Toast.css">
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--wc-bg-secondary);
+      color: var(--wc-text-primary);
+      padding: var(--wc-space-8);
+    }
+
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .demo-header {
+      margin-bottom: var(--wc-space-8);
+    }
+
+    .demo-header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: var(--wc-space-2);
+    }
+
+    .demo-header p {
+      color: var(--wc-text-secondary);
+      font-size: 16px;
+    }
+
+    .demo-section {
+      background: var(--wc-surface-default);
+      border: 1px solid var(--wc-border-default);
+      border-radius: 8px;
+      padding: var(--wc-space-6);
+      margin-bottom: var(--wc-space-6);
+    }
+
+    .demo-section h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: var(--wc-space-4);
+    }
+
+    .demo-section h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: var(--wc-space-6);
+      margin-bottom: var(--wc-space-3);
+      color: var(--wc-text-secondary);
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--wc-space-3);
+      margin-bottom: var(--wc-space-4);
+    }
+
+    .demo-button {
+      padding: var(--wc-space-2-5) var(--wc-space-4);
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--wc-interactive-default);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--wc-transition-button);
+    }
+
+    .demo-button:hover {
+      background: var(--wc-interactive-hover);
+    }
+
+    .demo-button:active {
+      background: var(--wc-interactive-active);
+    }
+
+    .demo-button--secondary {
+      background: var(--wc-bg-tertiary);
+      color: var(--wc-text-primary);
+      border: 1px solid var(--wc-border-default);
+    }
+
+    .demo-button--secondary:hover {
+      background: var(--wc-bg-hover);
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--wc-space-4);
+      margin-top: var(--wc-space-4);
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--wc-space-2);
+    }
+
+    .control-item label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--wc-text-secondary);
+    }
+
+    .control-item select,
+    .control-item input {
+      padding: var(--wc-space-2) var(--wc-space-3);
+      font-size: 14px;
+      background: var(--wc-surface-default);
+      color: var(--wc-text-primary);
+      border: 1px solid var(--wc-border-default);
+      border-radius: 4px;
+    }
+
+    .code-block {
+      background: var(--wc-bg-tertiary);
+      border: 1px solid var(--wc-border-default);
+      border-radius: 4px;
+      padding: var(--wc-space-4);
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-top: var(--wc-space-3);
+    }
+
+    .stats {
+      display: flex;
+      gap: var(--wc-space-6);
+      padding: var(--wc-space-4);
+      background: var(--wc-bg-secondary);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .stats strong {
+      color: var(--wc-text-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <div class="demo-header">
+      <h1>Toast Component</h1>
+      <p>Accessible toast notification system with auto-dismiss, variants, and actions</p>
+    </div>
+
+    <!-- Basic Variants -->
+    <div class="demo-section">
+      <h2>Basic Variants</h2>
+      <div class="button-group">
+        <button class="demo-button" onclick="showSuccess()">Success</button>
+        <button class="demo-button" onclick="showError()">Error</button>
+        <button class="demo-button" onclick="showWarning()">Warning</button>
+        <button class="demo-button" onclick="showInfo()">Info</button>
+      </div>
+      <div class="code-block">
+toast.success('Clip saved successfully');
+toast.error('Failed to save clip');
+toast.warning('Storage space running low');
+toast.info('New version available');</div>
+    </div>
+
+    <!-- With Descriptions -->
+    <div class="demo-section">
+      <h2>With Descriptions</h2>
+      <div class="button-group">
+        <button class="demo-button" onclick="showSuccessDesc()">Success + Description</button>
+        <button class="demo-button" onclick="showErrorDesc()">Error + Description</button>
+        <button class="demo-button" onclick="showWarningDesc()">Warning + Description</button>
+      </div>
+      <div class="code-block">
+toast.success('Clip saved', 'Your clip has been saved to the archive');
+toast.error('Authentication failed', 'Please check your credentials');</div>
+    </div>
+
+    <!-- With Actions -->
+    <div class="demo-section">
+      <h2>With Action Buttons</h2>
+      <div class="button-group">
+        <button class="demo-button" onclick="showActionSuccess()">Success with Action</button>
+        <button class="demo-button" onclick="showActionError()">Error with Retry</button>
+        <button class="demo-button" onclick="showActionInfo()">Info with Action</button>
+      </div>
+      <div class="code-block">
+toast.success('Clip saved', undefined, {
+  action: { label: 'View', onClick: () => alert('View clicked') }
+});</div>
+    </div>
+
+    <!-- Duration Control -->
+    <div class="demo-section">
+      <h2>Duration Control</h2>
+      <div class="button-group">
+        <button class="demo-button" onclick="showQuick()">Quick (2s)</button>
+        <button class="demo-button" onclick="showNormal()">Normal (5s)</button>
+        <button class="demo-button" onclick="showSlow()">Slow (10s)</button>
+        <button class="demo-button" onclick="showPersistent()">Persistent</button>
+      </div>
+      <div class="code-block">
+toast.info('Quick message', undefined, { duration: 2000 });
+toast.warning('Persistent', undefined, { duration: 0 });</div>
+    </div>
+
+    <!-- Advanced Controls -->
+    <div class="demo-section">
+      <h2>Advanced Controls</h2>
+
+      <h3>Custom Toast Configuration</h3>
+      <div class="control-grid">
+        <div class="control-item">
+          <label for="position">Position</label>
+          <select id="position" onchange="updatePosition()">
+            <option value="bottom-right" selected>Bottom Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="top-right">Top Right</option>
+            <option value="top-left">Top Left</option>
+          </select>
+        </div>
+        <div class="control-item">
+          <label for="maxToasts">Max Toasts</label>
+          <input type="number" id="maxToasts" value="5" min="1" max="10" onchange="updateMaxToasts()">
+        </div>
+        <div class="control-item">
+          <label for="gap">Gap (px)</label>
+          <input type="number" id="gap" value="12" min="4" max="24" step="4" onchange="updateGap()">
+        </div>
+      </div>
+
+      <h3>Test Actions</h3>
+      <div class="button-group">
+        <button class="demo-button" onclick="showMultiple()">Show 5 Toasts</button>
+        <button class="demo-button demo-button--secondary" onclick="dismissAll()">Dismiss All</button>
+        <button class="demo-button demo-button--secondary" onclick="testOverflow()">Test Overflow (10 toasts)</button>
+      </div>
+
+      <div class="stats">
+        <div>Active Toasts: <strong id="activeCount">0</strong></div>
+        <div>Total Shown: <strong id="totalCount">0</strong></div>
+      </div>
+    </div>
+
+    <!-- Accessibility -->
+    <div class="demo-section">
+      <h2>Accessibility Features</h2>
+      <ul style="line-height: 1.8; color: var(--wc-text-secondary);">
+        <li>✓ ARIA roles and live regions for screen readers</li>
+        <li>✓ Timer pauses on hover and focus</li>
+        <li>✓ Keyboard accessible dismiss button</li>
+        <li>✓ Respects prefers-reduced-motion</li>
+        <li>✓ WCAG AA color contrast compliance</li>
+        <li>✓ Minimum 5-second default duration</li>
+      </ul>
+      <div class="button-group">
+        <button class="demo-button" onclick="testAccessibility()">Test Pause on Hover</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { toast, toastManager } from './ToastManager.js';
+
+    // Make available globally for demo
+    window.toast = toast;
+    window.toastManager = toastManager;
+
+    let totalCount = 0;
+
+    function updateStats() {
+      document.getElementById('activeCount').textContent = toastManager.getActiveCount();
+      document.getElementById('totalCount').textContent = totalCount;
+    }
+
+    // Basic variants
+    window.showSuccess = () => {
+      toast.success('Clip saved successfully');
+      totalCount++;
+      updateStats();
+    };
+
+    window.showError = () => {
+      toast.error('Failed to save clip');
+      totalCount++;
+      updateStats();
+    };
+
+    window.showWarning = () => {
+      toast.warning('Storage space running low');
+      totalCount++;
+      updateStats();
+    };
+
+    window.showInfo = () => {
+      toast.info('New version available');
+      totalCount++;
+      updateStats();
+    };
+
+    // With descriptions
+    window.showSuccessDesc = () => {
+      toast.success('Clip saved', 'Your clip has been saved to the archive');
+      totalCount++;
+      updateStats();
+    };
+
+    window.showErrorDesc = () => {
+      toast.error('Authentication failed', 'Please check your credentials and try again');
+      totalCount++;
+      updateStats();
+    };
+
+    window.showWarningDesc = () => {
+      toast.warning('Storage almost full', 'You have used 90% of your storage quota');
+      totalCount++;
+      updateStats();
+    };
+
+    // With actions
+    window.showActionSuccess = () => {
+      toast.success('Clip saved', undefined, {
+        action: {
+          label: 'View',
+          onClick: () => alert('View action clicked!')
+        }
+      });
+      totalCount++;
+      updateStats();
+    };
+
+    window.showActionError = () => {
+      toast.error('Upload failed', undefined, {
+        action: {
+          label: 'Retry',
+          onClick: () => {
+            toast.info('Retrying upload...');
+            totalCount++;
+            updateStats();
+          }
+        }
+      });
+      totalCount++;
+      updateStats();
+    };
+
+    window.showActionInfo = () => {
+      toast.info('Update available', 'Version 2.0 is now available', {
+        action: {
+          label: 'Update',
+          onClick: () => alert('Starting update...')
+        }
+      });
+      totalCount++;
+      updateStats();
+    };
+
+    // Duration control
+    window.showQuick = () => {
+      toast.info('Quick message (2s)', undefined, { duration: 2000 });
+      totalCount++;
+      updateStats();
+    };
+
+    window.showNormal = () => {
+      toast.info('Normal duration (5s)', undefined, { duration: 5000 });
+      totalCount++;
+      updateStats();
+    };
+
+    window.showSlow = () => {
+      toast.info('Slow message (10s)', undefined, { duration: 10000 });
+      totalCount++;
+      updateStats();
+    };
+
+    window.showPersistent = () => {
+      toast.warning('Persistent notification', 'This will not auto-dismiss', { duration: 0 });
+      totalCount++;
+      updateStats();
+    };
+
+    // Advanced controls
+    window.updatePosition = () => {
+      const position = document.getElementById('position').value;
+      toastManager.updateConfig({ position });
+    };
+
+    window.updateMaxToasts = () => {
+      const maxToasts = parseInt(document.getElementById('maxToasts').value);
+      toastManager.updateConfig({ maxToasts });
+    };
+
+    window.updateGap = () => {
+      const gap = parseInt(document.getElementById('gap').value);
+      toastManager.updateConfig({ gap });
+    };
+
+    window.showMultiple = () => {
+      const variants = ['success', 'error', 'warning', 'info', 'success'];
+      variants.forEach((variant, i) => {
+        setTimeout(() => {
+          toast[variant](`Toast ${i + 1}`, `This is toast number ${i + 1}`);
+          totalCount++;
+          updateStats();
+        }, i * 200);
+      });
+    };
+
+    window.dismissAll = () => {
+      toast.dismissAll();
+      updateStats();
+    };
+
+    window.testOverflow = () => {
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          toast.info(`Toast ${i + 1}`, `Testing max limit with toast ${i + 1}`);
+          totalCount++;
+          updateStats();
+        }, i * 100);
+      }
+    };
+
+    window.testAccessibility = () => {
+      toast.info(
+        'Hover over me!',
+        'The timer will pause when you hover or focus this toast. Try it!',
+        { duration: 8000 }
+      );
+      totalCount++;
+      updateStats();
+    };
+
+    // Update stats periodically
+    setInterval(updateStats, 500);
+    updateStats();
+  </script>
+</body>
+</html>

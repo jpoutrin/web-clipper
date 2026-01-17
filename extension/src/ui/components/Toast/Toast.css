@@ -1,0 +1,398 @@
+/**
+ * Web Clipper - Toast Styles
+ *
+ * Toast notification component with variants, animations, and accessibility.
+ * Supports dark mode and respects prefers-reduced-motion.
+ */
+
+/* Toast Container */
+.wc-toast-container {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wc-toast-gap, var(--wc-space-3));
+  pointer-events: none;
+  max-width: 360px;
+  padding: var(--wc-space-4);
+}
+
+/* Container Positions */
+.wc-toast-container--top-left {
+  top: 0;
+  left: 0;
+}
+
+.wc-toast-container--top-right {
+  top: 0;
+  right: 0;
+}
+
+.wc-toast-container--bottom-left {
+  bottom: 0;
+  left: 0;
+  flex-direction: column-reverse;
+}
+
+.wc-toast-container--bottom-right {
+  bottom: 0;
+  right: 0;
+  flex-direction: column-reverse;
+}
+
+/* Toast Base */
+.wc-toast {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 56px;
+  background: var(--wc-surface-elevated);
+  border: 1px solid var(--wc-border-default);
+  border-radius: 8px;
+  box-shadow: var(--wc-shadow-lg);
+  pointer-events: auto;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: var(--wc-transition-modal);
+}
+
+/* Enter Animation */
+.wc-toast--visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Exit Animation */
+.wc-toast--exiting {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity var(--wc-duration-base) var(--wc-ease-in-out),
+              transform var(--wc-duration-base) var(--wc-ease-in);
+}
+
+/* Left position variants */
+.wc-toast-container--top-left .wc-toast,
+.wc-toast-container--bottom-left .wc-toast {
+  transform: translateX(-100%);
+}
+
+.wc-toast-container--top-left .wc-toast--visible,
+.wc-toast-container--bottom-left .wc-toast--visible {
+  transform: translateX(0);
+}
+
+.wc-toast-container--top-left .wc-toast--exiting,
+.wc-toast-container--bottom-left .wc-toast--exiting {
+  transform: translateX(-100%);
+}
+
+/* Toast Content */
+.wc-toast__content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wc-space-3);
+  padding: var(--wc-space-4);
+  padding-right: var(--wc-space-10); /* Space for dismiss button */
+}
+
+/* Icon */
+.wc-toast__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px; /* Align with text baseline */
+}
+
+/* Text Container */
+.wc-toast__text {
+  flex: 1;
+  min-width: 0; /* Enable text truncation */
+}
+
+.wc-toast__title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--wc-text-primary);
+  margin: 0;
+}
+
+.wc-toast__description {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--wc-text-secondary);
+  margin-top: var(--wc-space-1);
+}
+
+/* Action Button */
+.wc-toast__action {
+  align-self: flex-start;
+  flex-shrink: 0;
+  padding: var(--wc-space-1-5) var(--wc-space-3);
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--wc-transition-button);
+  margin-top: 1px; /* Align with text */
+}
+
+.wc-toast__action:hover {
+  background: var(--wc-bg-hover);
+}
+
+.wc-toast__action:focus-visible {
+  outline: 2px solid var(--wc-border-focus);
+  outline-offset: 2px;
+}
+
+/* Dismiss Button */
+.wc-toast__dismiss {
+  position: absolute;
+  top: var(--wc-space-3);
+  right: var(--wc-space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--wc-text-secondary);
+  cursor: pointer;
+  transition: var(--wc-transition-color);
+}
+
+.wc-toast__dismiss:hover {
+  color: var(--wc-text-primary);
+  background: var(--wc-bg-hover);
+}
+
+.wc-toast__dismiss:focus-visible {
+  outline: 2px solid var(--wc-border-focus);
+  outline-offset: 2px;
+}
+
+/* Progress Bar */
+.wc-toast__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .wc-toast__progress {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.wc-toast__progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: currentColor;
+  opacity: 0.5;
+  transition: width 50ms linear;
+}
+
+/* Variant Colors */
+
+/* Success */
+.wc-toast--success {
+  border-left: 4px solid var(--wc-success-500);
+}
+
+.wc-toast--success .wc-toast__icon {
+  color: var(--wc-success-600);
+}
+
+.wc-toast--success .wc-toast__action {
+  color: var(--wc-success-600);
+}
+
+.wc-toast--success .wc-toast__action:hover {
+  background: var(--wc-success-50);
+}
+
+.wc-toast--success .wc-toast__progress-fill {
+  background: var(--wc-success-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  .wc-toast--success .wc-toast__icon {
+    color: var(--wc-success-400);
+  }
+
+  .wc-toast--success .wc-toast__action {
+    color: var(--wc-success-400);
+  }
+
+  .wc-toast--success .wc-toast__action:hover {
+    background: rgba(34, 197, 94, 0.1);
+  }
+}
+
+/* Error */
+.wc-toast--error {
+  border-left: 4px solid var(--wc-error-500);
+}
+
+.wc-toast--error .wc-toast__icon {
+  color: var(--wc-error-600);
+}
+
+.wc-toast--error .wc-toast__action {
+  color: var(--wc-error-600);
+}
+
+.wc-toast--error .wc-toast__action:hover {
+  background: var(--wc-error-50);
+}
+
+.wc-toast--error .wc-toast__progress-fill {
+  background: var(--wc-error-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  .wc-toast--error .wc-toast__icon {
+    color: var(--wc-error-400);
+  }
+
+  .wc-toast--error .wc-toast__action {
+    color: var(--wc-error-400);
+  }
+
+  .wc-toast--error .wc-toast__action:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+/* Warning */
+.wc-toast--warning {
+  border-left: 4px solid var(--wc-warning-500);
+}
+
+.wc-toast--warning .wc-toast__icon {
+  color: var(--wc-warning-600);
+}
+
+.wc-toast--warning .wc-toast__action {
+  color: var(--wc-warning-600);
+}
+
+.wc-toast--warning .wc-toast__action:hover {
+  background: var(--wc-warning-50);
+}
+
+.wc-toast--warning .wc-toast__progress-fill {
+  background: var(--wc-warning-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  .wc-toast--warning .wc-toast__icon {
+    color: var(--wc-warning-400);
+  }
+
+  .wc-toast--warning .wc-toast__action {
+    color: var(--wc-warning-400);
+  }
+
+  .wc-toast--warning .wc-toast__action:hover {
+    background: rgba(245, 158, 11, 0.1);
+  }
+}
+
+/* Info */
+.wc-toast--info {
+  border-left: 4px solid var(--wc-primary-500);
+}
+
+.wc-toast--info .wc-toast__icon {
+  color: var(--wc-primary-600);
+}
+
+.wc-toast--info .wc-toast__action {
+  color: var(--wc-primary-600);
+}
+
+.wc-toast--info .wc-toast__action:hover {
+  background: var(--wc-primary-50);
+}
+
+.wc-toast--info .wc-toast__progress-fill {
+  background: var(--wc-primary-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  .wc-toast--info .wc-toast__icon {
+    color: var(--wc-primary-400);
+  }
+
+  .wc-toast--info .wc-toast__action {
+    color: var(--wc-primary-400);
+  }
+
+  .wc-toast--info .wc-toast__action:hover {
+    background: rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Hover State - Pause indicator */
+.wc-toast:hover .wc-toast__progress-fill {
+  transition: none; /* Pause animation */
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .wc-toast {
+    transition: opacity var(--wc-duration-fast) var(--wc-ease-in-out);
+    transform: none !important;
+  }
+
+  .wc-toast--visible {
+    opacity: 1;
+  }
+
+  .wc-toast--exiting {
+    opacity: 0;
+  }
+
+  .wc-toast__progress-fill {
+    transition: none;
+  }
+}
+
+/* Focus Within - Highlight when any element is focused */
+.wc-toast:focus-within {
+  box-shadow: var(--wc-shadow-lg), var(--wc-shadow-focus);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+  .wc-toast-container {
+    left: var(--wc-space-2) !important;
+    right: var(--wc-space-2) !important;
+    max-width: none;
+    padding: var(--wc-space-2);
+  }
+
+  .wc-toast {
+    width: 100%;
+  }
+
+  .wc-toast__content {
+    padding: var(--wc-space-3);
+  }
+}

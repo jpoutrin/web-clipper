@@ -1,0 +1,261 @@
+/**
+ * Floating Toolbar Styles
+ *
+ * Styles for the floating toolbar component with positioning arrow,
+ * action buttons, and dark mode support.
+ */
+
+@import '../../tokens/colors.css';
+@import '../../tokens/shadows.css';
+
+/* Container - positioned absolutely/fixed */
+.wc-floating-toolbar-container {
+  position: fixed;
+  z-index: 999999;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.wc-floating-toolbar-container.wc-floating-toolbar--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Positioning Arrow */
+.wc-floating-toolbar-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--wc-surface-elevated);
+  border: 1px solid var(--wc-border-default);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+/* Arrow positioning - bottom placement (arrow points up) */
+.wc-floating-toolbar--bottom .wc-floating-toolbar-arrow {
+  top: -6px;
+  border-bottom: none;
+  border-right: none;
+}
+
+/* Arrow positioning - top placement (arrow points down) */
+.wc-floating-toolbar--top .wc-floating-toolbar-arrow {
+  bottom: -6px;
+  border-top: none;
+  border-left: none;
+}
+
+/* Toolbar container */
+.wc-floating-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--wc-surface-elevated);
+  border: 1px solid var(--wc-border-default);
+  border-radius: 8px;
+  box-shadow: var(--wc-shadow-lg);
+  min-height: 40px;
+  position: relative;
+}
+
+/* Action Button */
+.wc-toolbar-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--wc-text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  outline: none;
+}
+
+/* Icon sizing */
+.wc-toolbar-action svg {
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+/* Default variant - hover states */
+.wc-toolbar-action--default:hover:not(:disabled) {
+  background: var(--wc-bg-hover);
+}
+
+.wc-toolbar-action--default:active:not(:disabled) {
+  background: var(--wc-bg-active);
+  transform: scale(0.95);
+}
+
+/* Primary variant - filled button */
+.wc-toolbar-action--primary {
+  background: var(--wc-interactive-default);
+  color: var(--wc-text-inverse);
+}
+
+.wc-toolbar-action--primary:hover:not(:disabled) {
+  background: var(--wc-interactive-hover);
+}
+
+.wc-toolbar-action--primary:active:not(:disabled) {
+  background: var(--wc-interactive-active);
+  transform: scale(0.95);
+}
+
+/* Danger variant - red on hover */
+.wc-toolbar-action--danger {
+  color: var(--wc-text-primary);
+}
+
+.wc-toolbar-action--danger:hover:not(:disabled) {
+  background: var(--wc-error-50);
+  color: var(--wc-error-700);
+}
+
+.wc-toolbar-action--danger:active:not(:disabled) {
+  background: var(--wc-error-100);
+  color: var(--wc-error-800);
+  transform: scale(0.95);
+}
+
+@media (prefers-color-scheme: dark) {
+  .wc-toolbar-action--danger:hover:not(:disabled) {
+    background: var(--wc-error-950);
+    color: var(--wc-error-400);
+  }
+
+  .wc-toolbar-action--danger:active:not(:disabled) {
+    background: var(--wc-error-900);
+    color: var(--wc-error-300);
+  }
+}
+
+/* Disabled state */
+.wc-toolbar-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Focus state */
+.wc-toolbar-action:focus-visible {
+  box-shadow: var(--wc-shadow-focus);
+}
+
+.wc-toolbar-action--danger:focus-visible {
+  box-shadow: var(--wc-shadow-focus-error);
+}
+
+/* Separator */
+.wc-toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--wc-border-default);
+  margin: 0 4px;
+}
+
+/* Tooltip */
+.wc-toolbar-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: var(--wc-gray-900);
+  color: var(--wc-gray-50);
+  font-size: 12px;
+  line-height: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  white-space: nowrap;
+  border-radius: 4px;
+  box-shadow: var(--wc-shadow-tooltip);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 1;
+}
+
+.wc-toolbar-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--wc-gray-900);
+}
+
+.wc-toolbar-tooltip.wc-toolbar-tooltip--visible {
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .wc-toolbar-tooltip {
+    background: var(--wc-gray-800);
+    color: var(--wc-gray-50);
+    box-shadow: var(--wc-shadow-tooltip), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .wc-toolbar-tooltip::before {
+    border-top-color: var(--wc-gray-800);
+  }
+}
+
+/* Animation when position changes */
+.wc-floating-toolbar-container[data-position-changed] {
+  animation: toolbar-reposition 0.2s ease;
+}
+
+@keyframes toolbar-reposition {
+  0% {
+    opacity: 0.5;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .wc-floating-toolbar {
+    border-width: 2px;
+  }
+
+  .wc-toolbar-action:focus-visible {
+    outline: 2px solid var(--wc-border-focus);
+    outline-offset: 2px;
+  }
+
+  .wc-toolbar-separator {
+    width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .wc-floating-toolbar-container,
+  .wc-toolbar-action,
+  .wc-toolbar-tooltip {
+    transition: none;
+  }
+
+  @keyframes toolbar-reposition {
+    0%, 100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

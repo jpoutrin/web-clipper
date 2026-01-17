@@ -1,0 +1,46 @@
+/**
+ * Web Clipper - Design Tokens
+ *
+ * Central import file for all design tokens.
+ * Import this file to get access to all design tokens.
+ *
+ * Usage:
+ *   @import './tokens/index.css';
+ *
+ * Or import individual token files:
+ *   @import './tokens/colors.css';
+ *   @import './tokens/typography.css';
+ */
+
+/* Import all token files */
+@import './colors.css';
+@import './typography.css';
+@import './spacing.css';
+@import './layout.css';
+@import './shadows.css';
+@import './animations.css';
+@import './reset.css';
+
+/**
+ * Default Typography and Color Settings
+ *
+ * Applied to :host and :root for Shadow DOM and regular DOM compatibility.
+ */
+:host, :root {
+  /* Default font */
+  font-family: var(--wc-font-family-sans);
+  font-size: var(--wc-font-size-base);
+  font-weight: var(--wc-font-weight-normal);
+  line-height: var(--wc-line-height-normal);
+
+  /* Default colors */
+  color: var(--wc-text-primary);
+  background-color: var(--wc-bg-primary);
+
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Text rendering optimization */
+  text-rendering: optimizeLegibility;
+}
