@@ -2,11 +2,18 @@
  * Selection Capture Module
  *
  * Captures a selected HTML element and converts it to Markdown.
- * Handles image extraction and style processing.
+ * Handles image extraction, style processing, and embedded content capture.
  */
 
 import TurndownService from 'turndown';
 import { ImagePayload, CaptureConfig } from '../types';
+import {
+  safeDetectEmbeds,
+  safeCaptureAllEmbeds,
+  addEmbedRules,
+  CapturedEmbed,
+  DEFAULT_EMBED_CONFIG,
+} from '../embeds';
 
 export interface SelectionCapture {
   html: string;
@@ -26,28 +33,82 @@ export async function captureSelection(
   element: HTMLElement,
   config: CaptureConfig
 ): Promise<SelectionCapture> {
+  // 1. Detect embeds within the selected element BEFORE cloning
+  console.log('[WebClipper] Selection: Detecting embedded content...');
+  const detectedEmbeds = safeDetectEmbeds(DEFAULT_EMBED_CONFIG, element);
+  console.log(`[WebClipper] Selection: Found ${detectedEmbeds.length} embeds`);
+
+  // 2. Mark detected embeds with data attributes BEFORE cloning
+  detectedEmbeds.forEach((detected, index) => {
+    detected.element.setAttribute('data-webclipper-embed-id', String(index));
+  });
+
+  // 3. Capture embeds (screenshots)
+  let capturedEmbeds: CapturedEmbed[] = [];
+  if (detectedEmbeds.length > 0) {
+    console.log('[WebClipper] Selection: Capturing embedded content...');
+    capturedEmbeds = await safeCaptureAllEmbeds(detectedEmbeds, DEFAULT_EMBED_CONFIG);
+    console.log(`[WebClipper] Selection: Captured ${capturedEmbeds.length} embeds`);
+  }
+
+  // Create embed map for Turndown rules (ID -> captured data)
+  const embedMap = new Map<string, CapturedEmbed>();
+  detectedEmbeds.forEach((detected, index) => {
+    const captured = capturedEmbeds.find(
+      (c) => c.providerId === detected.provider.id && c.filename.includes(`embed${detected.index}`)
+    );
+    if (captured) {
+      embedMap.set(String(index), captured);
+    }
+  });
+
   // Clone the element
   const clone = element.cloneNode(true) as HTMLElement;
 
   // Get unique selector for reference
   const selector = getUniqueSelector(element);
 
-  // Extract images and update references
+  // Extract images and update references (with lazy-loading support)
   const imageMap = new Map<string, string>();
   const imgElements = clone.querySelectorAll('img');
   let imageIndex = 0;
 
   imgElements.forEach((img) => {
-    const src = img.getAttribute('src') || img.getAttribute('data-src');
+    // Try multiple sources: src, data-src, data-lazy-src, srcset
+    let src = img.getAttribute('src');
+
+    // Check for lazy-loading attributes
+    if (!src || src.startsWith('data:') || src.includes('placeholder')) {
+      src = img.getAttribute('data-src') ||
+            img.getAttribute('data-lazy-src') ||
+            img.getAttribute('data-original') ||
+            null;
+    }
+
+    // Try srcset as fallback
+    if (!src) {
+      const srcset = img.getAttribute('srcset') || img.getAttribute('data-srcset');
+      if (srcset) {
+        const firstSrc = srcset.split(',')[0]?.trim().split(' ')[0];
+        if (firstSrc) src = firstSrc;
+      }
+    }
+
     if (src && !src.startsWith('data:')) {
       // Resolve relative URLs
-      const absoluteUrl = new URL(src, window.location.href).href;
-      const ext = getImageExtension(absoluteUrl);
-      const filename = `image${++imageIndex}${ext}`;
-      imageMap.set(absoluteUrl, filename);
-      img.setAttribute('src', `media/${filename}`);
-      img.removeAttribute('data-src');
-      img.removeAttribute('srcset');
+      try {
+        const absoluteUrl = new URL(src, window.location.href).href;
+        const ext = getImageExtension(absoluteUrl);
+        const filename = `image${++imageIndex}${ext}`;
+        imageMap.set(absoluteUrl, filename);
+        img.setAttribute('src', `media/${filename}`);
+        img.removeAttribute('data-src');
+        img.removeAttribute('data-lazy-src');
+        img.removeAttribute('srcset');
+        img.removeAttribute('data-srcset');
+      } catch {
+        // Invalid URL, skip
+      }
     }
   });
 
@@ -60,6 +121,9 @@ export async function captureSelection(
     codeBlockStyle: 'fenced',
     emDelimiter: '*',
   });
+
+  // Add embed replacement rules FIRST
+  addEmbedRules(turndown, embedMap);
 
   // Custom rule for code blocks
   turndown.addRule('codeBlocks', {
@@ -78,10 +142,19 @@ export async function captureSelection(
 
   const markdown = turndown.turndown(html);
 
-  // Fetch images
-  const images = await fetchImages(imageMap, config);
+  // Fetch regular images
+  const regularImages = await fetchImages(imageMap, config);
 
-  return { html, markdown, images, selector };
+  // Combine regular images and embed images
+  const embedImages: ImagePayload[] = capturedEmbeds.map((embed) => ({
+    filename: embed.filename,
+    data: embed.data,
+    originalUrl: '',
+  }));
+
+  const allImages = [...regularImages, ...embedImages];
+
+  return { html, markdown, images: allImages, selector };
 }
 
 /**

@@ -66,6 +66,7 @@ export type MessageType =
   | 'CAPTURE_SCREENSHOT'
   | 'CAPTURE_SELECTION'
   | 'CAPTURE_FULLPAGE'
+  | 'CAPTURE_EMBED'
   | 'START_SELECTION_MODE'
   | 'CANCEL_SELECTION_MODE'
   | 'SELECTION_COMPLETE'
@@ -142,4 +143,34 @@ export interface CaptureResult {
 export interface CaptureConfig {
   maxDimensionPx: number;
   maxSizeBytes: number;
+}
+
+/**
+ * Payload for CAPTURE_EMBED message.
+ */
+export interface CaptureEmbedPayload {
+  /** Bounding rectangle of the embed element */
+  bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+
+  /** Device pixel ratio for high-DPI displays */
+  devicePixelRatio: number;
+}
+
+/**
+ * Response from CAPTURE_EMBED message.
+ */
+export interface CaptureEmbedResponse {
+  /** Whether the capture succeeded */
+  success: boolean;
+
+  /** Base64-encoded cropped image data (if success) */
+  data?: string;
+
+  /** Error message (if failed) */
+  error?: string;
 }

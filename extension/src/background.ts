@@ -6,6 +6,8 @@ import {
   Message,
   CaptureResult,
   ScreenshotResult,
+  CaptureEmbedPayload,
+  CaptureEmbedResponse,
 } from './types';
 import { compressScreenshot } from './capture/screenshot';
 
@@ -82,6 +84,9 @@ async function handleMessage(
 
     case 'CAPTURE_SCREENSHOT':
       return withCaptureLock(() => captureScreenshot());
+
+    case 'CAPTURE_EMBED':
+      return handleCaptureEmbed(message.payload as CaptureEmbedPayload);
 
     case 'FETCH_IMAGE':
       return fetchImage((message.payload as { url: string }).url);
@@ -526,4 +531,114 @@ async function refreshToken(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Handle CAPTURE_EMBED message.
+ * Captures the visible tab and crops to the specified bounds.
+ */
+async function handleCaptureEmbed(
+  payload: CaptureEmbedPayload
+): Promise<CaptureEmbedResponse> {
+  try {
+    const { bounds, devicePixelRatio } = payload;
+
+    // Get current window for capture
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab.id || !tab.windowId) {
+      return { success: false, error: 'No active tab' };
+    }
+
+    // Capture the visible tab
+    const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
+      format: 'png',
+      quality: 100,
+    });
+
+    // Crop the image to the embed bounds
+    const croppedData = await cropImage(dataUrl, bounds, devicePixelRatio);
+
+    return {
+      success: true,
+      data: croppedData,
+    };
+  } catch (err) {
+    console.error('CAPTURE_EMBED error:', err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Capture failed',
+    };
+  }
+}
+
+/**
+ * Crop an image to the specified bounds using OffscreenCanvas.
+ *
+ * @param dataUrl - The full screenshot as a data URL
+ * @param bounds - The crop region in CSS pixels
+ * @param devicePixelRatio - The device pixel ratio for scaling
+ * @returns Base64-encoded cropped image data
+ */
+async function cropImage(
+  dataUrl: string,
+  bounds: { x: number; y: number; width: number; height: number },
+  devicePixelRatio: number
+): Promise<string> {
+  // Load the image
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  const bitmap = await createImageBitmap(blob);
+
+  // Scale bounds by device pixel ratio
+  const scaledBounds = {
+    x: Math.round(bounds.x * devicePixelRatio),
+    y: Math.round(bounds.y * devicePixelRatio),
+    width: Math.round(bounds.width * devicePixelRatio),
+    height: Math.round(bounds.height * devicePixelRatio),
+  };
+
+  // Clamp bounds to image dimensions
+  const clampedBounds = {
+    x: Math.max(0, Math.min(scaledBounds.x, bitmap.width - 1)),
+    y: Math.max(0, Math.min(scaledBounds.y, bitmap.height - 1)),
+    width: Math.min(scaledBounds.width, bitmap.width - scaledBounds.x),
+    height: Math.min(scaledBounds.height, bitmap.height - scaledBounds.y),
+  };
+
+  // Ensure we have valid dimensions
+  if (clampedBounds.width <= 0 || clampedBounds.height <= 0) {
+    throw new Error('Invalid crop bounds');
+  }
+
+  // Create canvas for cropped image
+  const canvas = new OffscreenCanvas(clampedBounds.width, clampedBounds.height);
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Failed to get canvas context');
+  }
+
+  // Draw the cropped region
+  ctx.drawImage(
+    bitmap,
+    clampedBounds.x,
+    clampedBounds.y,
+    clampedBounds.width,
+    clampedBounds.height,
+    0,
+    0,
+    clampedBounds.width,
+    clampedBounds.height
+  );
+
+  // Convert to blob
+  const croppedBlob = await canvas.convertToBlob({ type: 'image/png' });
+
+  // Convert to base64
+  const arrayBuffer = await croppedBlob.arrayBuffer();
+  const base64 = btoa(
+    new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+  );
+
+  return base64;
 }
