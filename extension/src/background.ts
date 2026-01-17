@@ -92,17 +92,133 @@ async function devLogin(payload: { serverUrl: string }): Promise<{ success: bool
   }
 }
 
-// Initiate OAuth login
-async function initiateLogin(payload: { serverUrl: string }): Promise<{ loginUrl: string } | { error: string }> {
+// Initiate OAuth login via popup window
+async function initiateLogin(payload: { serverUrl: string }): Promise<{ success: boolean } | { error: string }> {
   try {
     authState.serverUrl = payload.serverUrl;
     await chrome.storage.local.set({ authState });
 
-    // Build login URL with redirect back to extension
-    const callbackUrl = chrome.runtime.getURL('callback.html');
-    const loginUrl = `${payload.serverUrl}/auth/login?redirect=${encodeURIComponent(callbackUrl)}`;
+    // Build login URL with redirect flag (server will show success page)
+    const loginUrl = `${payload.serverUrl}/auth/login?redirect=extension`;
 
-    return { loginUrl };
+    // Open popup window for OAuth
+    const popup = await chrome.windows.create({
+      url: loginUrl,
+      type: 'popup',
+      width: 500,
+      height: 600
+    });
+
+    const popupId = popup?.id;
+    if (!popupId) {
+      return { error: 'Failed to open login window' };
+    }
+
+    // Monitor the popup for auth completion
+    return new Promise((resolve) => {
+      let popupTabId: number | undefined;
+
+      const checkInterval = setInterval(async () => {
+        try {
+          // Check if popup still exists
+          const windows = await chrome.windows.getAll({ populate: true });
+          const popupWindow = windows.find(w => w.id === popupId);
+
+          if (!popupWindow) {
+            clearInterval(checkInterval);
+            // Check if we got authenticated while popup was open
+            if (authState.accessToken) {
+              resolve({ success: true });
+            } else {
+              resolve({ error: 'Login cancelled' });
+            }
+            return;
+          }
+
+          // Get the tab ID from the popup window
+          if (popupWindow.tabs && popupWindow.tabs[0]?.id) {
+            popupTabId = popupWindow.tabs[0].id;
+          }
+
+          // Try to read tokens from the popup page
+          if (popupTabId) {
+            try {
+              // First check the URL to see if we're on the success page
+              const tab = await chrome.tabs.get(popupTabId);
+              const tabUrl = tab.url || '';
+
+              console.log('Web Clipper: Checking popup URL:', tabUrl);
+              console.log('Web Clipper: Server URL:', authState.serverUrl);
+
+              // Only try to read tokens if we're back on our server (not Google's OAuth page)
+              // Normalize URLs for comparison
+              const normalizedTabUrl = tabUrl.replace(/\/$/, '');
+              const normalizedServerUrl = authState.serverUrl.replace(/\/$/, '');
+
+              if (normalizedTabUrl.startsWith(normalizedServerUrl)) {
+                console.log('Web Clipper: On server page, attempting to read tokens...');
+
+                const results = await chrome.scripting.executeScript({
+                  target: { tabId: popupTabId },
+                  world: 'MAIN', // Access page's JavaScript context, not isolated world
+                  func: () => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const auth = (window as any).webClipperAuth;
+                    console.log('Web Clipper (injected): Found auth object:', auth);
+                    return auth;
+                  }
+                });
+
+                console.log('Web Clipper: Script execution results:', results);
+
+                if (results[0]?.result) {
+                  const tokens = results[0].result;
+                  console.log('Web Clipper: Got tokens:', {
+                    hasAccessToken: !!tokens.accessToken,
+                    hasRefreshToken: !!tokens.refreshToken,
+                    expiresAt: tokens.expiresAt
+                  });
+
+                  clearInterval(checkInterval);
+
+                  // Save tokens
+                  authState.accessToken = tokens.accessToken;
+                  authState.refreshToken = tokens.refreshToken;
+                  authState.expiresAt = tokens.expiresAt;
+                  await chrome.storage.local.set({ authState });
+
+                  console.log('Web Clipper: Auth tokens saved to storage');
+
+                  // Fetch server config
+                  await fetchServerConfig();
+
+                  // Close popup
+                  chrome.windows.remove(popupId);
+
+                  resolve({ success: true });
+                } else {
+                  console.log('Web Clipper: No tokens found in page yet');
+                }
+              }
+            } catch (e) {
+              // Script execution failed (different origin, page not ready, etc.)
+              // This is expected during OAuth redirect, continue polling
+              console.log('Web Clipper: Script execution error (may be normal during OAuth):', e);
+            }
+          }
+        } catch {
+          // Window check failed, popup was closed
+          clearInterval(checkInterval);
+          resolve({ error: 'Login window closed' });
+        }
+      }, 500);
+
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve({ error: 'Login timeout' });
+      }, 5 * 60 * 1000);
+    });
   } catch (err) {
     return { error: `Failed to initiate login: ${err}` };
   }

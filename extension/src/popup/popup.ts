@@ -19,7 +19,17 @@ let config: ServerConfig | null = null;
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
-  // Get current state from background
+  await refreshState();
+
+  // Pre-fill title from current tab
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.title) {
+    clipTitleInput.value = tab.title;
+  }
+});
+
+// Refresh state from background
+async function refreshState() {
   const state = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
   authState = state.authState;
   config = state.serverConfig;
@@ -32,12 +42,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Update UI based on auth state
   updateUI();
 
-  // Pre-fill title from current tab
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab?.title) {
-    clipTitleInput.value = tab.title;
+  // Show appropriate message
+  if (authState?.accessToken) {
+    hideMessage();
   }
-});
+}
 
 // Update UI based on authentication state
 function updateUI() {
@@ -60,6 +69,7 @@ connectBtn.addEventListener('click', async () => {
   }
 
   setLoading(connectBtn, true);
+  showMessage('Opening login window...', 'info');
 
   try {
     const response = await chrome.runtime.sendMessage({
@@ -69,10 +79,13 @@ connectBtn.addEventListener('click', async () => {
 
     if (response.error) {
       showMessage(response.error, 'error');
-    } else if (response.loginUrl) {
-      // Open login URL in new tab
-      chrome.tabs.create({ url: response.loginUrl });
-      showMessage('Please complete login in the opened tab', 'info');
+    } else if (response.success) {
+      // Update local state
+      const state = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+      authState = state.authState;
+      config = state.serverConfig;
+      updateUI();
+      showMessage('Connected successfully!', 'success');
     }
   } catch (err) {
     showMessage(`Connection failed: ${err}`, 'error');
