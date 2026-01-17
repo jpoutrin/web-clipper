@@ -16,6 +16,12 @@
 | Depends On | TS-0001, TS-0003 |
 | Location | tech-specs/draft/TS-0004-embedded-content-capture.md |
 
+## Implementation Tracking
+
+Task List: ../tasks/TS-0004-embedded-content-capture-tasks.md
+Generated: 2026-01-17
+Status: See task file for current progress
+
 ## Executive Summary
 
 This specification defines a screenshot-based capture system for embedded content (charts, graphs, social media posts) that are currently lost during article clipping. The system uses an extensible provider registry pattern to detect, prepare, and capture various embed types, integrating the results seamlessly into the Markdown output.

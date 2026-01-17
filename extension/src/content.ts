@@ -238,6 +238,9 @@ async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
   tempDiv.innerHTML = article.content || '';
 
   // Remove unwanted elements from Readability output
+  // Only target container elements (div, section, aside, nav, footer) - never remove headings or paragraphs
+  const containerTags = ['DIV', 'SECTION', 'ASIDE', 'NAV', 'FOOTER', 'FIGURE'];
+
   // 1. Related articles sections
   const relatedSelectors = [
     '[class*="related"]',
@@ -252,26 +255,37 @@ async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
     '.fig-premium-article',
   ];
   relatedSelectors.forEach((selector) => {
-    tempDiv.querySelectorAll(selector).forEach((el) => el.remove());
+    tempDiv.querySelectorAll(selector).forEach((el) => {
+      // Only remove container elements, preserve headings and paragraphs
+      if (containerTags.includes(el.tagName)) {
+        el.remove();
+      }
+    });
   });
 
   // 2. Ad skip links and ad containers
   const adSelectors = [
     'a[href*="skip"]',
     'a[href*="publicite"]',
-    '[class*="pub-"]',
-    '[class*="-pub"]',
-    '[class*="ad-"]',
-    '[class*="-ad"]',
-    '[class*="advertisement"]',
-    '[class*="sponsor"]',
-    '[class*="promo"]',
-    '[id*="ad-"]',
-    '[id*="pub-"]',
+    'div[class*="pub-"]',
+    'div[class*="-pub"]',
+    'div[class*="ad-"]',
+    'div[class*="-ad"]',
+    'div[class*="advertisement"]',
+    'div[class*="sponsor"]',
+    'div[class*="promo"]',
+    'div[id*="ad-"]',
+    'div[id*="pub-"]',
+    'div[id^="google_ads_iframe_"]',
+    'iframe[id^="google_ads_iframe_"]',
+    'div[id*="google_ad"]',
+    'div[id*="doubleclick"]',
     '[data-ad]',
-    '.ad',
-    '.ads',
-    '.pub',
+    'div.ad',
+    'div.ads',
+    'div.pub',
+    '.adsbygoogle',
+    'div[class*="google-ad"]',
   ];
   adSelectors.forEach((selector) => {
     tempDiv.querySelectorAll(selector).forEach((el) => el.remove());

@@ -49,6 +49,12 @@ export function detectEmbeds(
             break;
           }
 
+          // Skip advertisements
+          if (isAdvertisement(element)) {
+            processedElements.add(element);
+            continue;
+          }
+
           // Check if element is visible and meets size requirements
           const bounds = element.getBoundingClientRect();
           if (!isValidEmbedBounds(bounds, config)) {
@@ -91,6 +97,12 @@ export function detectEmbeds(
     }
 
     if (processedElements.has(iframe)) {
+      continue;
+    }
+
+    // Skip advertisements
+    if (isAdvertisement(iframe)) {
+      processedElements.add(iframe);
       continue;
     }
 
@@ -179,4 +191,63 @@ function isEmbedWrapper(element: HTMLElement): boolean {
   ];
 
   return wrapperClasses.some((cls) => element.classList.contains(cls));
+}
+
+/**
+ * Check if an element is an advertisement that should be skipped.
+ */
+function isAdvertisement(element: HTMLElement): boolean {
+  const id = element.id || '';
+  const className = element.className || '';
+  const src = element.getAttribute('src') || '';
+
+  // Check ID patterns
+  if (
+    id.startsWith('google_ads_iframe_') ||
+    id.includes('google_ad') ||
+    id.includes('doubleclick') ||
+    id.includes('ad-') ||
+    id.includes('pub-')
+  ) {
+    return true;
+  }
+
+  // Check class patterns
+  if (
+    className.includes('adsbygoogle') ||
+    className.includes('google-ad') ||
+    className.includes('ad-container') ||
+    className.includes('ad-slot') ||
+    className.includes('advertisement')
+  ) {
+    return true;
+  }
+
+  // Check src patterns for iframes
+  if (
+    src.includes('doubleclick.net') ||
+    src.includes('googlesyndication.com') ||
+    src.includes('googleadservices.com') ||
+    src.includes('ad.') ||
+    src.includes('/ads/') ||
+    src.includes('pagead')
+  ) {
+    return true;
+  }
+
+  // Check parent container for ad indicators
+  const parent = element.parentElement;
+  if (parent) {
+    const parentId = parent.id || '';
+    const parentClass = parent.className || '';
+    if (
+      parentId.startsWith('google_ads_iframe_') ||
+      parentId.includes('google_ad') ||
+      parentClass.includes('adsbygoogle')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
