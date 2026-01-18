@@ -2225,3 +2225,11 @@ kbd {
 | AC18 | Reduced motion respected | Animations disabled when preference set |
 | AC19 | Mobile toolbar position | Toolbar at bottom on narrow viewports |
 | AC20 | Resize handles functional | Corner handles allow selection adjustment |
+
+---
+
+## Implementation Tracking
+
+Task List: tasks/TS-0005-area-screenshot-capture-tasks.md
+Generated: 2026-01-17
+Status: See task file for current progress
