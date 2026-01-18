@@ -11,6 +11,7 @@ import {
   CapturedEmbed,
   DEFAULT_EMBED_CONFIG,
 } from './embeds';
+import { applyContentFilters } from './filters';
 
 // Active selection overlay instance
 let selectionOverlay: SelectionOverlay | null = null;
@@ -236,6 +237,13 @@ async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
   // Create a temporary div to parse the HTML content
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = article.content || '';
+
+  // Apply enhanced content filters (link density, etc.)
+  // Based on Evernote Clearly's proven heuristics
+  const filterStats = applyContentFilters(tempDiv, {
+    debug: false, // Set to true for debugging filter decisions
+  });
+  console.log('[WebClipper] Content filter stats:', filterStats);
 
   // Remove unwanted elements from Readability output
   // Only target container elements (div, section, aside, nav, footer) - never remove headings or paragraphs
