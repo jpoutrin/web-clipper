@@ -269,6 +269,12 @@ func authRefresh(c buffalo.Context) error {
 		return c.Error(http.StatusUnauthorized, fmt.Errorf("user not found"))
 	}
 
+	// Check if user is disabled
+	if user.Disabled {
+		c.Logger().Warnf("Token refresh denied for disabled user: %s", user.Email)
+		return c.Error(http.StatusForbidden, fmt.Errorf("account is disabled"))
+	}
+
 	// Generate new tokens
 	tokens, err := generateTokens(user)
 	if err != nil {
@@ -416,8 +422,22 @@ func authMiddleware(next buffalo.Handler) buffalo.Handler {
 			return c.Error(http.StatusUnauthorized, fmt.Errorf("not an access token"))
 		}
 
+		userID := claims["sub"].(string)
+
+		// Check if user is disabled
+		tx := c.Value("tx").(*pop.Connection)
+		user := &models.User{}
+		if err := tx.Find(user, userID); err != nil {
+			return c.Error(http.StatusUnauthorized, fmt.Errorf("user not found"))
+		}
+
+		if user.Disabled {
+			c.Logger().Warnf("Access denied for disabled user: %s", user.Email)
+			return c.Error(http.StatusForbidden, fmt.Errorf("account is disabled"))
+		}
+
 		// Set user info in context for downstream handlers
-		c.Set("user_id", claims["sub"])
+		c.Set("user_id", userID)
 		c.Set("user_email", claims["email"])
 
 		return next(c)

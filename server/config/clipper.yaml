@@ -36,3 +36,8 @@ dev_mode:
   user_id: "dev-user-001"
   email: "dev@localhost"
   name: "Dev User"
+
+admin:
+  # Allowed storage paths that users can be assigned to
+  # Empty list means any path under storage.base_path is allowed
+  allowed_paths: []

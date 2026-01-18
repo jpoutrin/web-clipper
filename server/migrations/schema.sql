@@ -10,6 +10,6 @@ CREATE TABLE IF NOT EXISTS "users" (
 "clip_directory" TEXT,
 "created_at" DATETIME NOT NULL,
 "updated_at" DATETIME NOT NULL
-);
+, "disabled" bool DEFAULT 'false');
 CREATE UNIQUE INDEX "users_oauth_id_idx" ON "users" (oauth_id);
 CREATE INDEX "users_email_idx" ON "users" (email);

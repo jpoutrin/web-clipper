@@ -16,6 +16,11 @@ type Config struct {
 	Images  ImagesConfig  `yaml:"images"`
 	JWT     JWTConfig     `yaml:"jwt"`
 	DevMode DevModeConfig `yaml:"dev_mode"`
+	Admin   AdminConfig   `yaml:"admin"`
+}
+
+type AdminConfig struct {
+	AllowedPaths []string `yaml:"allowed_paths"`
 }
 
 type DevModeConfig struct {
