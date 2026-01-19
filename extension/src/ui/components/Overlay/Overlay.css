@@ -1,0 +1,142 @@
+/**
+ * Overlay Component Styles
+ *
+ * Provides base styles for all overlay variants with support for:
+ * - Fullscreen modal overlays
+ * - Highlight borders for element selection
+ * - Selection areas with canvas rendering
+ *
+ * Uses CSS custom properties from design tokens for theming.
+ */
+
+/* Base Overlay Styles */
+.wc-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  transition: opacity var(--wc-duration-normal, 200ms) var(--wc-ease-out, ease-out);
+  opacity: 0;
+}
+
+.wc-overlay--visible {
+  opacity: 1;
+}
+
+/* Fullscreen Variant - Modal overlay with dimmed background */
+.wc-overlay--fullscreen {
+  background-color: var(--wc-bg-overlay, rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(2px);
+}
+
+/* Highlight Variant - Transparent overlay for element highlighting */
+.wc-overlay--highlight {
+  background-color: transparent;
+  pointer-events: none;
+}
+
+.wc-highlight-box {
+  position: absolute;
+  border: 2px solid var(--wc-primary-500, #3b82f6);
+  border-radius: 4px;
+  pointer-events: none;
+  transition: all var(--wc-duration-fast, 100ms) var(--wc-ease-out, ease-out);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Pulsing animation for highlight */
+.wc-highlight-box--pulse {
+  animation: wc-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes wc-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.5),
+      0 0 12px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* Selection Variant - Canvas-based area selection */
+.wc-overlay--selection {
+  background-color: transparent;
+  cursor: crosshair;
+}
+
+.wc-selection-canvas {
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: crosshair;
+}
+
+/* Handle cursors for resize operations */
+.wc-selection-canvas[data-cursor="nw-resize"] { cursor: nw-resize; }
+.wc-selection-canvas[data-cursor="n-resize"] { cursor: n-resize; }
+.wc-selection-canvas[data-cursor="ne-resize"] { cursor: ne-resize; }
+.wc-selection-canvas[data-cursor="e-resize"] { cursor: e-resize; }
+.wc-selection-canvas[data-cursor="se-resize"] { cursor: se-resize; }
+.wc-selection-canvas[data-cursor="s-resize"] { cursor: s-resize; }
+.wc-selection-canvas[data-cursor="sw-resize"] { cursor: sw-resize; }
+.wc-selection-canvas[data-cursor="w-resize"] { cursor: w-resize; }
+
+/* Accessibility - Screen reader only */
+.wc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduced Motion - Disable animations */
+@media (prefers-reduced-motion: reduce) {
+  .wc-overlay {
+    transition: none;
+  }
+
+  .wc-highlight-box {
+    transition: none;
+    animation: none !important;
+  }
+
+  .wc-highlight-box--pulse {
+    animation: none;
+  }
+}
+
+/* Dark Mode Adjustments */
+@media (prefers-color-scheme: dark) {
+  .wc-overlay--fullscreen {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+
+  .wc-highlight-box {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.3),
+      0 0 12px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .wc-highlight-box {
+    border-width: 3px;
+  }
+
+  .wc-overlay--fullscreen {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}

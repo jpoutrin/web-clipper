@@ -13,7 +13,7 @@ body {
 }
 
 .container {
-  width: 320px;
+  width: 360px;
   padding: 16px;
 }
 
@@ -32,6 +32,82 @@ h1 {
   display: none !important;
 }
 
+/* Mode Selector */
+.mode-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mode-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  min-width: 72px;
+}
+
+.mode-btn:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.mode-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.mode-btn.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mode-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+  color: #6b7280;
+}
+
+.mode-btn.active .mode-icon {
+  color: #3b82f6;
+}
+
+.mode-btn:hover .mode-icon {
+  color: #3b82f6;
+}
+
+.mode-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.mode-btn.active .mode-label {
+  color: #3b82f6;
+}
+
+.mode-btn:hover .mode-label {
+  color: #3b82f6;
+}
+
+/* Form elements */
 .form-group {
   margin-bottom: 12px;
 }
@@ -65,8 +141,11 @@ h1 {
   min-height: 60px;
 }
 
+/* Buttons */
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10px 16px;
   font-size: 14px;
   font-weight: 500;
@@ -76,6 +155,7 @@ h1 {
   cursor: pointer;
   transition: background-color 0.2s;
   width: 100%;
+  position: relative;
 }
 
 .btn-primary {
@@ -123,6 +203,7 @@ h1 {
   text-decoration: underline;
 }
 
+/* Status */
 .status {
   display: flex;
   align-items: center;
@@ -146,6 +227,7 @@ h1 {
   margin-right: 8px;
 }
 
+/* Messages */
 .message {
   padding: 12px;
   border-radius: 6px;
@@ -170,8 +252,8 @@ h1 {
 
 /* Loading spinner */
 .loading {
-  position: relative;
   pointer-events: none;
+  color: transparent !important;
 }
 
 .loading::after {
@@ -182,10 +264,15 @@ h1 {
   width: 16px;
   height: 16px;
   margin: -8px 0 0 -8px;
-  border: 2px solid #fff;
-  border-top-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+}
+
+.btn-secondary.loading::after {
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #333;
 }
 
 @keyframes spin {

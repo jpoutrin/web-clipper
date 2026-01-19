@@ -1,7 +1,9 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -14,6 +16,11 @@ type Config struct {
 	Images  ImagesConfig  `yaml:"images"`
 	JWT     JWTConfig     `yaml:"jwt"`
 	DevMode DevModeConfig `yaml:"dev_mode"`
+	Admin   AdminConfig   `yaml:"admin"`
+}
+
+type AdminConfig struct {
+	AllowedPaths []string `yaml:"allowed_paths"`
 }
 
 type DevModeConfig struct {
@@ -24,16 +31,19 @@ type DevModeConfig struct {
 }
 
 type ServerConfig struct {
-	Port string `yaml:"port"`
-	Host string `yaml:"host"`
+	Port    string `yaml:"port"`
+	Host    string `yaml:"host"`
+	BaseURL string `yaml:"base_url"`
 }
 
 type OAuthConfig struct {
-	Provider     string         `yaml:"provider"`
-	ClientID     string         `yaml:"client_id"`
-	ClientSecret string         `yaml:"client_secret"`
-	RedirectURL  string         `yaml:"redirect_url"`
-	Keycloak     KeycloakConfig `yaml:"keycloak"`
+	Provider       string         `yaml:"provider"`
+	ClientID       string         `yaml:"client_id"`
+	ClientSecret   string         `yaml:"client_secret"`
+	RedirectURL    string         `yaml:"redirect_url"`
+	AllowedDomains []string       `yaml:"allowed_domains"` // Email domains allowed to sign up (empty = all allowed)
+	AllowedEmails  []string       `yaml:"allowed_emails"`  // Specific emails allowed (whitelist)
+	Keycloak       KeycloakConfig `yaml:"keycloak"`
 }
 
 type KeycloakConfig struct {
@@ -58,18 +68,48 @@ type JWTConfig struct {
 	ExpiryHours int    `yaml:"expiry_hours"`
 }
 
+// expandEnvWithDefaults expands environment variables supporting ${VAR:-default} syntax
+func expandEnvWithDefaults(s string) string {
+	// Match ${VAR:-default} pattern
+	re := regexp.MustCompile(`\$\{([^}:]+):-([^}]*)\}`)
+	result := re.ReplaceAllStringFunc(s, func(match string) string {
+		parts := re.FindStringSubmatch(match)
+		if len(parts) == 3 {
+			varName := parts[1]
+			defaultVal := parts[2]
+			if val := os.Getenv(varName); val != "" {
+				return val
+			}
+			return defaultVal
+		}
+		return match
+	})
+	// Then expand remaining simple ${VAR} and $VAR
+	return os.ExpandEnv(result)
+}
+
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Expand environment variables
-	expanded := os.ExpandEnv(string(data))
+	// Expand environment variables (with default value support)
+	expanded := expandEnvWithDefaults(string(data))
 
 	var cfg Config
 	if err := yaml.Unmarshal([]byte(expanded), &cfg); err != nil {
 		return nil, err
+	}
+
+	// Try to load local override file (e.g., clipper.local.yaml)
+	localPath := strings.TrimSuffix(path, ".yaml") + ".local.yaml"
+	if localData, err := os.ReadFile(localPath); err == nil {
+		localExpanded := expandEnvWithDefaults(string(localData))
+		// Merge local config on top of base config
+		if err := yaml.Unmarshal([]byte(localExpanded), &cfg); err != nil {
+			return nil, fmt.Errorf("failed to parse local config %s: %w", localPath, err)
+		}
 	}
 
 	// Apply defaults

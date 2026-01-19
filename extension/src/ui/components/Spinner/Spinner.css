@@ -1,0 +1,48 @@
+/**
+ * Spinner Component Styles
+ *
+ * Circular spinning animation with size variants.
+ * Respects prefers-reduced-motion for accessibility.
+ */
+
+.wc-spinner {
+  display: inline-block;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--wc-radius-full);
+  animation: wc-spin 0.6s linear infinite;
+}
+
+/* Size variants */
+.wc-spinner--sm {
+  width: 16px;
+  height: 16px;
+}
+
+.wc-spinner--md {
+  width: 24px;
+  height: 24px;
+}
+
+.wc-spinner--lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+/* Spin animation */
+@keyframes wc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .wc-spinner {
+    animation: none;
+    border-color: currentColor;
+    border-right-color: currentColor;
+    opacity: 0.5;
+  }
+}

@@ -1,0 +1,60 @@
+/**
+ * CSS Reset for Shadow DOM Components
+ *
+ * This reset ensures consistent styling across all Shadow DOM roots
+ * in the Web Clipper extension, preventing host page styles from
+ * bleeding into our components.
+ */
+
+/* Box model reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Remove default margins and padding */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Button reset */
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Media element defaults */
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Focus management */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--wc-primary-500);
+  outline-offset: 2px;
+}
+
+/* Screen reader only utility */
+.wc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

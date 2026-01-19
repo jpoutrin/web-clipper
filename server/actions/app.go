@@ -71,6 +71,7 @@ func App() *buffalo.App {
 		auth.POST("/refresh", authRefresh)
 		auth.POST("/logout", authLogout)
 		auth.GET("/dev-token", authDevToken) // Dev mode only
+		auth.GET("/test-success", authTestSuccess) // Test success page rendering
 
 		// API routes (protected)
 		api := app.Group("/api/v1")
@@ -82,27 +83,38 @@ func App() *buffalo.App {
 	return app
 }
 
-// setupOAuth configures the Keycloak OpenID Connect provider
+// setupOAuth configures the OpenID Connect provider based on config
 func setupOAuth() {
-	if cfg.OAuth.Provider == "keycloak" {
-		discoveryURL := cfg.OAuth.Keycloak.BaseURL +
+	var discoveryURL string
+	var providerName string
+
+	switch cfg.OAuth.Provider {
+	case "google":
+		discoveryURL = "https://accounts.google.com/.well-known/openid-configuration"
+		providerName = "google"
+	case "keycloak":
+		discoveryURL = cfg.OAuth.Keycloak.BaseURL +
 			"/realms/" + cfg.OAuth.Keycloak.Realm +
 			"/.well-known/openid-configuration"
-
-		provider, err := openidConnect.New(
-			cfg.OAuth.ClientID,
-			cfg.OAuth.ClientSecret,
-			cfg.OAuth.RedirectURL,
-			discoveryURL,
-			"openid", "email", "profile",
-		)
-		if err != nil {
-			log.Printf("Warning: Could not setup OAuth provider: %v", err)
-			return
-		}
-		provider.SetName("keycloak")
-		goth.UseProviders(provider)
+		providerName = "keycloak"
+	default:
+		log.Printf("Warning: Unknown OAuth provider: %s", cfg.OAuth.Provider)
+		return
 	}
+
+	provider, err := openidConnect.New(
+		cfg.OAuth.ClientID,
+		cfg.OAuth.ClientSecret,
+		cfg.OAuth.RedirectURL,
+		discoveryURL,
+		"openid", "email", "profile",
+	)
+	if err != nil {
+		log.Printf("Warning: Could not setup OAuth provider: %v", err)
+		return
+	}
+	provider.SetName(providerName)
+	goth.UseProviders(provider)
 }
 
 // corsMiddleware handles CORS headers for the extension

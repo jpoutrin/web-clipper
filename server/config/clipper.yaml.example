@@ -1,0 +1,50 @@
+# Web Clipper Server Configuration
+#
+# Copy this file to clipper.yaml to use as base config.
+# Create clipper.local.yaml to override settings (gitignored).
+#
+# Environment variables: ${VAR} or ${VAR:-default} syntax supported.
+
+server:
+  port: "${PORT:-3000}"
+  host: "0.0.0.0"
+  # External base URL (for OAuth callbacks when behind a proxy)
+  base_url: "${SERVER_BASE_URL:-http://localhost:3000}"
+
+oauth:
+  # Provider: "google" or "keycloak"
+  provider: "${OAUTH_PROVIDER:-keycloak}"
+  client_id: "${OAUTH_CLIENT_ID}"
+  client_secret: "${OAUTH_CLIENT_SECRET}"
+  # OAuth callback URL - must match provider's redirect URI config
+  redirect_url: "${OAUTH_REDIRECT_URL:-http://localhost:3000/auth/callback}"
+
+  # Access control (empty = allow all authenticated users)
+  # Configure in clipper.local.yaml:
+  # allowed_domains: ["example.com", "company.org"]
+  # allowed_emails: ["user@example.com"]
+
+  # Keycloak settings (only when provider=keycloak)
+  keycloak:
+    realm: "web-clipper"
+    base_url: "${KEYCLOAK_BASE_URL:-https://auth.example.com}"
+
+storage:
+  base_path: "${CLIP_DIRECTORY:-./clips}"
+  create_missing: true
+
+images:
+  max_size_bytes: 5242880      # 5MB per image
+  max_dimension_px: 2048       # Max width/height
+  max_total_bytes: 26214400    # 25MB total per clip
+  preserve_original: false
+
+jwt:
+  secret: "${JWT_SECRET:-dev-secret-change-in-production}"
+  expiry_hours: 24
+
+dev_mode:
+  enabled: ${DEV_MODE:-false}
+  user_id: "dev-user-001"
+  email: "dev@localhost"
+  name: "Dev User"

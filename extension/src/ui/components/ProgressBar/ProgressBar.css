@@ -1,0 +1,305 @@
+/**
+ * Progress Bar Styles
+ *
+ * Styles for linear and phased progress bar variants with size options,
+ * animations, and dark mode support.
+ */
+
+/* Container */
+.wc-progress-container {
+  width: 100%;
+}
+
+/* Base Progress Bar */
+.wc-progress {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ================================
+   LINEAR VARIANT
+   ================================ */
+
+.wc-progress.linear {
+  border-radius: 9999px;
+}
+
+.wc-progress-track {
+  width: 100%;
+  background-color: var(--wc-gray-200);
+  border-radius: inherit;
+  overflow: hidden;
+  position: relative;
+}
+
+.wc-progress-fill {
+  height: 100%;
+  background-color: var(--wc-primary-600);
+  border-radius: inherit;
+  transition: width var(--wc-duration-normal) var(--wc-ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer animation for linear progress */
+.wc-progress.linear.animated .wc-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ================================
+   PHASED VARIANT
+   ================================ */
+
+.wc-progress.phased {
+  border-radius: 6px;
+}
+
+.wc-progress-phases {
+  display: flex;
+  gap: var(--wc-space-1);
+  width: 100%;
+}
+
+.wc-progress-phase {
+  position: relative;
+  background-color: var(--wc-gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: background-color var(--wc-duration-normal) var(--wc-ease-out);
+}
+
+.wc-progress-phase-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform-origin: left;
+  transition: transform var(--wc-duration-normal) var(--wc-ease-out);
+  border-radius: inherit;
+}
+
+/* Phase status colors */
+.wc-progress-phase[data-status="pending"] {
+  background-color: var(--wc-gray-200);
+}
+
+.wc-progress-phase[data-status="pending"] .wc-progress-phase-fill {
+  transform: scaleX(0);
+  background-color: var(--wc-gray-300);
+}
+
+.wc-progress-phase[data-status="active"] {
+  background-color: var(--wc-gray-200);
+}
+
+.wc-progress-phase[data-status="active"] .wc-progress-phase-fill {
+  transform: scaleX(0.5);
+  background-color: var(--wc-primary-600);
+}
+
+.wc-progress-phase[data-status="completed"] {
+  background-color: var(--wc-success-600);
+}
+
+.wc-progress-phase[data-status="completed"] .wc-progress-phase-fill {
+  transform: scaleX(1);
+  background-color: var(--wc-success-600);
+}
+
+.wc-progress-phase[data-status="error"] {
+  background-color: var(--wc-error-600);
+}
+
+.wc-progress-phase[data-status="error"] .wc-progress-phase-fill {
+  transform: scaleX(1);
+  background-color: var(--wc-error-600);
+}
+
+/* Shimmer animation for active phase */
+.wc-progress.phased.animated .wc-progress-phase[data-status="active"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+/* Phase labels */
+.wc-progress-phase-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: var(--wc-space-1);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--wc-text-secondary);
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+}
+
+.wc-progress-phase[data-status="active"] .wc-progress-phase-label {
+  color: var(--wc-text-primary);
+  font-weight: 600;
+}
+
+.wc-progress-phase[data-status="completed"] .wc-progress-phase-label {
+  color: var(--wc-success-600);
+}
+
+.wc-progress-phase[data-status="error"] .wc-progress-phase-label {
+  color: var(--wc-error-600);
+}
+
+/* ================================
+   SIZE VARIANTS
+   ================================ */
+
+/* Small - 4px height */
+.wc-progress.linear.sm .wc-progress-track,
+.wc-progress.linear.sm .wc-progress-fill {
+  height: 4px;
+}
+
+.wc-progress.phased.sm .wc-progress-phase {
+  height: 4px;
+}
+
+/* Medium - 8px height */
+.wc-progress.linear.md .wc-progress-track,
+.wc-progress.linear.md .wc-progress-fill {
+  height: 8px;
+}
+
+.wc-progress.phased.md .wc-progress-phase {
+  height: 8px;
+}
+
+/* Large - 12px height */
+.wc-progress.linear.lg .wc-progress-track,
+.wc-progress.linear.lg .wc-progress-fill {
+  height: 12px;
+}
+
+.wc-progress.phased.lg .wc-progress-phase {
+  height: 12px;
+}
+
+/* ================================
+   LABEL & PERCENTAGE
+   ================================ */
+
+.wc-progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--wc-space-2);
+  font-size: 14px;
+  color: var(--wc-text-secondary);
+}
+
+.wc-progress-percentage {
+  font-weight: 500;
+  color: var(--wc-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================================
+   DARK MODE ADJUSTMENTS
+   ================================ */
+
+@media (prefers-color-scheme: dark) {
+  .wc-progress-fill {
+    background-color: var(--wc-primary-500);
+  }
+
+  .wc-progress-phase[data-status="active"] .wc-progress-phase-fill {
+    background-color: var(--wc-primary-500);
+  }
+
+  .wc-progress-phase[data-status="completed"] {
+    background-color: var(--wc-success-500);
+  }
+
+  .wc-progress-phase[data-status="completed"] .wc-progress-phase-fill {
+    background-color: var(--wc-success-500);
+  }
+
+  .wc-progress-phase[data-status="error"] {
+    background-color: var(--wc-error-500);
+  }
+
+  .wc-progress-phase[data-status="error"] .wc-progress-phase-fill {
+    background-color: var(--wc-error-500);
+  }
+
+  .wc-progress-phase[data-status="completed"] .wc-progress-phase-label {
+    color: var(--wc-success-500);
+  }
+
+  .wc-progress-phase[data-status="error"] .wc-progress-phase-label {
+    color: var(--wc-error-500);
+  }
+}
+
+/* ================================
+   REDUCED MOTION
+   ================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .wc-progress-fill,
+  .wc-progress-phase,
+  .wc-progress-phase-fill {
+    transition: none;
+  }
+
+  .wc-progress.linear.animated .wc-progress-fill::after,
+  .wc-progress.phased.animated .wc-progress-phase[data-status="active"]::after {
+    animation: none;
+  }
+}
+
+/* ================================
+   FOCUS STYLES
+   ================================ */
+
+.wc-progress:focus {
+  outline: 2px solid var(--wc-primary-500);
+  outline-offset: 2px;
+}
+
+.wc-progress:focus:not(:focus-visible) {
+  outline: none;
+}

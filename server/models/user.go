@@ -17,6 +17,7 @@ type User struct {
 	Name          string       `json:"name" db:"name"`
 	OAuthID       string       `json:"oauth_id" db:"oauth_id"`
 	ClipDirectory nulls.String `json:"clip_directory" db:"clip_directory"`
+	Disabled      bool         `json:"disabled" db:"disabled"`
 	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at" db:"updated_at"`
 }

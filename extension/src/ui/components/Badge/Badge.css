@@ -1,0 +1,144 @@
+/**
+ * Badge Component Styles
+ *
+ * Pill-shaped badges with variant colors, sizes, icons, and removable functionality.
+ * Supports light/dark mode via CSS custom properties.
+ */
+
+/* Base badge styles */
+.wc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wc-space-1);
+  font-family: var(--wc-font-family-sans);
+  font-weight: var(--wc-font-weight-medium);
+  border-radius: var(--wc-radius-full);
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1;
+}
+
+/* Size variants */
+.wc-badge--sm {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.wc-badge--md {
+  padding: 4px 12px;
+  font-size: var(--wc-font-size-xs);
+}
+
+/* Color variants - Light mode (default) */
+.wc-badge--default {
+  background: var(--wc-gray-100);
+  color: var(--wc-gray-700);
+}
+
+.wc-badge--success {
+  background: var(--wc-success-100);
+  color: var(--wc-success-700);
+}
+
+.wc-badge--warning {
+  background: var(--wc-warning-100);
+  color: var(--wc-warning-700);
+}
+
+.wc-badge--error {
+  background: var(--wc-error-100);
+  color: var(--wc-error-700);
+}
+
+.wc-badge--info {
+  background: var(--wc-primary-100);
+  color: var(--wc-primary-700);
+}
+
+/* Icon */
+.wc-badge__icon {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wc-badge__icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+/* Label */
+.wc-badge__label {
+  /* No special styling needed, inherits from parent */
+}
+
+/* Remove button */
+.wc-badge__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: var(--wc-space-1);
+  margin-right: -4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--wc-radius-full);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity var(--wc-duration-fast) var(--wc-ease-out);
+  color: currentColor;
+}
+
+.wc-badge__remove:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.wc-badge__remove:focus-visible {
+  opacity: 1;
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+.wc-badge__remove svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  .wc-badge--default {
+    background: var(--wc-gray-800);
+    color: var(--wc-gray-300);
+  }
+
+  .wc-badge--success {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--wc-success-400);
+  }
+
+  .wc-badge--warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--wc-warning-400);
+  }
+
+  .wc-badge--error {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--wc-error-400);
+  }
+
+  .wc-badge--info {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--wc-primary-400);
+  }
+
+  .wc-badge__remove:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

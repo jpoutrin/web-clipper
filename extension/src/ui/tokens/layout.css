@@ -1,0 +1,126 @@
+/**
+ * Web Clipper - Layout Tokens
+ *
+ * Border radius, z-index, and other layout utilities.
+ * Uses :host, :root for Shadow DOM compatibility.
+ */
+
+:host, :root {
+  /* Border Radius */
+  --wc-radius-none: 0;
+  --wc-radius-sm: 0.125rem;      /* 2px */
+  --wc-radius-base: 0.25rem;     /* 4px */
+  --wc-radius-md: 0.375rem;      /* 6px */
+  --wc-radius-lg: 0.5rem;        /* 8px */
+  --wc-radius-xl: 0.75rem;       /* 12px */
+  --wc-radius-2xl: 1rem;         /* 16px */
+  --wc-radius-3xl: 1.5rem;       /* 24px */
+  --wc-radius-full: 9999px;
+
+  /* Semantic Radius Aliases */
+  --wc-radius-button: var(--wc-radius-md);
+  --wc-radius-input: var(--wc-radius-md);
+  --wc-radius-card: var(--wc-radius-lg);
+  --wc-radius-modal: var(--wc-radius-xl);
+  --wc-radius-dropdown: var(--wc-radius-lg);
+  --wc-radius-popover: var(--wc-radius-lg);
+  --wc-radius-tooltip: var(--wc-radius-base);
+  --wc-radius-badge: var(--wc-radius-full);
+  --wc-radius-avatar: var(--wc-radius-full);
+  --wc-radius-tag: var(--wc-radius-base);
+
+  /* Z-Index Scale */
+  --wc-z-base: 0;
+  --wc-z-dropdown: 1000;
+  --wc-z-sticky: 1100;
+  --wc-z-fixed: 1200;
+  --wc-z-popover: 1300;
+  --wc-z-tooltip: 1400;
+  --wc-z-modal-backdrop: 1500;
+  --wc-z-modal: 1600;
+  --wc-z-notification: 1700;
+  --wc-z-max: 9999;
+
+  /* Border Widths */
+  --wc-border-width-none: 0;
+  --wc-border-width-thin: 1px;
+  --wc-border-width-base: 1px;
+  --wc-border-width-medium: 2px;
+  --wc-border-width-thick: 4px;
+
+  /* Max Widths (for containers) */
+  --wc-max-width-xs: 20rem;      /* 320px */
+  --wc-max-width-sm: 24rem;      /* 384px */
+  --wc-max-width-md: 28rem;      /* 448px */
+  --wc-max-width-lg: 32rem;      /* 512px */
+  --wc-max-width-xl: 36rem;      /* 576px */
+  --wc-max-width-2xl: 42rem;     /* 672px */
+  --wc-max-width-3xl: 48rem;     /* 768px */
+  --wc-max-width-4xl: 56rem;     /* 896px */
+  --wc-max-width-5xl: 64rem;     /* 1024px */
+  --wc-max-width-6xl: 72rem;     /* 1152px */
+  --wc-max-width-7xl: 80rem;     /* 1280px */
+  --wc-max-width-full: 100%;
+
+  /* Semantic Width Aliases */
+  --wc-width-modal-sm: var(--wc-max-width-sm);
+  --wc-width-modal-md: var(--wc-max-width-lg);
+  --wc-width-modal-lg: var(--wc-max-width-2xl);
+  --wc-width-modal-xl: var(--wc-max-width-4xl);
+
+  --wc-width-popover: var(--wc-max-width-xs);
+  --wc-width-dropdown: var(--wc-max-width-sm);
+
+  /* Heights */
+  --wc-height-input-sm: 2rem;    /* 32px */
+  --wc-height-input-base: 2.5rem; /* 40px */
+  --wc-height-input-lg: 3rem;    /* 48px */
+
+  --wc-height-button-sm: 2rem;   /* 32px */
+  --wc-height-button-base: 2.5rem; /* 40px */
+  --wc-height-button-lg: 3rem;   /* 48px */
+
+  /* Opacity Scale */
+  --wc-opacity-0: 0;
+  --wc-opacity-5: 0.05;
+  --wc-opacity-10: 0.1;
+  --wc-opacity-20: 0.2;
+  --wc-opacity-30: 0.3;
+  --wc-opacity-40: 0.4;
+  --wc-opacity-50: 0.5;
+  --wc-opacity-60: 0.6;
+  --wc-opacity-70: 0.7;
+  --wc-opacity-80: 0.8;
+  --wc-opacity-90: 0.9;
+  --wc-opacity-95: 0.95;
+  --wc-opacity-100: 1;
+
+  /* Semantic Opacity Aliases */
+  --wc-opacity-disabled: var(--wc-opacity-50);
+  --wc-opacity-hover: var(--wc-opacity-90);
+  --wc-opacity-overlay: var(--wc-opacity-50);
+
+  /* Breakpoints (for reference in JS) */
+  --wc-breakpoint-xs: 0;
+  --wc-breakpoint-sm: 640px;
+  --wc-breakpoint-md: 768px;
+  --wc-breakpoint-lg: 1024px;
+  --wc-breakpoint-xl: 1280px;
+  --wc-breakpoint-2xl: 1536px;
+
+  /* Icon Sizes */
+  --wc-icon-size-xs: 0.75rem;    /* 12px */
+  --wc-icon-size-sm: 1rem;       /* 16px */
+  --wc-icon-size-base: 1.25rem;  /* 20px */
+  --wc-icon-size-lg: 1.5rem;     /* 24px */
+  --wc-icon-size-xl: 2rem;       /* 32px */
+  --wc-icon-size-2xl: 2.5rem;    /* 40px */
+
+  /* Avatar Sizes */
+  --wc-avatar-size-xs: 1.5rem;   /* 24px */
+  --wc-avatar-size-sm: 2rem;     /* 32px */
+  --wc-avatar-size-base: 2.5rem; /* 40px */
+  --wc-avatar-size-lg: 3rem;     /* 48px */
+  --wc-avatar-size-xl: 4rem;     /* 64px */
+  --wc-avatar-size-2xl: 6rem;    /* 96px */
+}

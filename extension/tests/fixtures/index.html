@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Clipper Components - Test Harness</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      padding: 2rem;
+      background: #f9fafb;
+      color: #111827;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #111827;
+        color: #f9fafb;
+      }
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #111827;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      h1 {
+        color: #f9fafb;
+      }
+    }
+
+    .component-section {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .component-section {
+        background: #1f2937;
+        border-color: #374151;
+      }
+    }
+
+    .component-section h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: #374151;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .component-section h2 {
+        color: #d1d5db;
+      }
+    }
+
+    .component-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .component-group h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      margin-bottom: 0.75rem;
+    }
+
+    .component-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .test-container {
+      padding: 1rem;
+      border: 1px dashed #d1d5db;
+      border-radius: 4px;
+      background: #f9fafb;
+      min-height: 100px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .test-container {
+        background: #111827;
+        border-color: #4b5563;
+      }
+    }
+
+    .progress-container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .toast-trigger-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .dialog-trigger-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .spinner-row {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    /* Utility classes */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Web Clipper UI Components</h1>
+    <p style="margin-bottom: 2rem; color: #6b7280;">Component test harness for Playwright testing</p>
+
+    <!-- Button Component -->
+    <div class="component-section" id="button-section">
+      <h2>Button Component</h2>
+
+      <div class="component-group">
+        <h3>Variants</h3>
+        <div class="component-row" id="button-variants">
+          <!-- Buttons will be inserted here by JavaScript -->
+        </div>
+      </div>
+
+      <div class="component-group">
+        <h3>Sizes</h3>
+        <div class="component-row" id="button-sizes">
+          <!-- Buttons will be inserted here by JavaScript -->
+        </div>
+      </div>
+
+      <div class="component-group">
+        <h3>States</h3>
+        <div class="component-row" id="button-states">
+          <!-- Buttons will be inserted here by JavaScript -->
+        </div>
+      </div>
+
+      <div class="component-group">
+        <h3>Icon Buttons</h3>
+        <div class="component-row" id="button-icons">
+          <!-- Buttons will be inserted here by JavaScript -->
+        </div>
+      </div>
+
+      <div class="component-group">
+        <h3>Full Width</h3>
+        <div class="component-row" id="button-full-width">
+          <!-- Buttons will be inserted here by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar Component -->
+    <div class="component-section" id="progressbar-section">
+      <h2>Progress Bar Component</h2>
+
+      <div class="component-group">
+        <h3>Linear Variant</h3>
+        <div class="component-grid">
+          <div class="progress-container" id="progress-linear-sm"></div>
+          <div class="progress-container" id="progress-linear-md"></div>
+          <div class="progress-container" id="progress-linear-lg"></div>
+        </div>
+      </div>
+
+      <div class="component-group">
+        <h3>Phased Variant</h3>
+        <div class="progress-container" id="progress-phased"></div>
+      </div>
+
+      <div class="component-group">
+        <h3>Interactive Controls</h3>
+        <div id="progress-interactive-container">
+          <div class="progress-container" id="progress-interactive"></div>
+          <div class="component-row" style="margin-top: 1rem;">
+            <button id="progress-decrease" style="padding: 0.5rem 1rem;">Decrease</button>
+            <button id="progress-increase" style="padding: 0.5rem 1rem;">Increase</button>
+            <button id="progress-phase-next" style="padding: 0.5rem 1rem;">Next Phase</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spinner Component -->
+    <div class="component-section" id="spinner-section">
+      <h2>Spinner Component</h2>
+
+      <div class="component-group">
+        <h3>Sizes</h3>
+        <div class="spinner-row" id="spinner-sizes">
+          <!-- Spinners will be inserted here by JavaScript -->
+        </div>
+      </div>
+
+      <div class="component-group">
+        <h3>Colors</h3>
+        <div class="spinner-row" id="spinner-colors">
+          <!-- Spinners will be inserted here by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog Component -->
+    <div class="component-section" id="dialog-section">
+      <h2>Dialog Component</h2>
+
+      <div class="component-group">
+        <h3>Dialog Variants</h3>
+        <div class="dialog-trigger-buttons">
+          <button id="dialog-default-trigger">Default Dialog</button>
+          <button id="dialog-warning-trigger">Warning Dialog</button>
+          <button id="dialog-error-trigger">Error Dialog</button>
+          <button id="dialog-success-trigger">Success Dialog</button>
+          <button id="dialog-dismissible-trigger">Dismissible Dialog</button>
+        </div>
+      </div>
+
+      <div id="dialog-result" role="status" aria-live="polite" style="margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 4px; display: none;"></div>
+    </div>
+
+    <!-- Toast Component -->
+    <div class="component-section" id="toast-section">
+      <h2>Toast Component</h2>
+
+      <div class="component-group">
+        <h3>Toast Variants</h3>
+        <div class="toast-trigger-buttons">
+          <button id="toast-success-trigger">Success Toast</button>
+          <button id="toast-error-trigger">Error Toast</button>
+          <button id="toast-warning-trigger">Warning Toast</button>
+          <button id="toast-info-trigger">Info Toast</button>
+          <button id="toast-action-trigger">Toast with Action</button>
+          <button id="toast-persistent-trigger">Persistent Toast</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast container (will be created by ToastManager) -->
+    <div id="toast-container"></div>
+  </div>
+
+  <!-- Load component scripts -->
+  <script type="module" src="./components.js"></script>
+</body>
+</html>

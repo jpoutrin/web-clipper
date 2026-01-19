@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Clipper Component Showcase</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--bg-color, #ffffff);
+      color: var(--text-color, #111827);
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        --bg-color: #111827;
+        --text-color: #f9fafb;
+      }
+    }
+
+    .showcase-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .showcase-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .showcase-header {
+        border-bottom-color: #374151;
+      }
+    }
+
+    .showcase-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .showcase-description {
+      font-size: 1rem;
+      color: #6b7280;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .showcase-description {
+        color: #9ca3af;
+      }
+    }
+
+    [data-testid="button-showcase"],
+    [data-testid="progress-showcase"],
+    [data-testid="dialog-showcase"],
+    [data-testid="badge-showcase"],
+    [data-testid="toast-showcase"],
+    [data-testid="spinner-showcase"] {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 2rem;
+      background-color: var(--showcase-bg, #f9fafb);
+      border-radius: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      [data-testid="button-showcase"],
+      [data-testid="progress-showcase"],
+      [data-testid="dialog-showcase"],
+      [data-testid="badge-showcase"],
+      [data-testid="toast-showcase"],
+      [data-testid="spinner-showcase"] {
+        --showcase-bg: #1f2937;
+      }
+    }
+
+    .showcase-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .showcase-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #6b7280;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .showcase-label {
+        color: #9ca3af;
+      }
+    }
+
+    .progress-wrapper {
+      width: 300px;
+    }
+
+    .dialog-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+
+    .background-dark {
+      background-color: #111827;
+      padding: 2rem;
+      border-radius: 8px;
+    }
+
+    .background-light {
+      background-color: #ffffff;
+      padding: 2rem;
+      border-radius: 8px;
+    }
+
+    .background-colored {
+      padding: 2rem;
+      border-radius: 8px;
+    }
+
+    .background-primary {
+      background-color: #3b82f6;
+    }
+
+    .background-success {
+      background-color: #22c55e;
+    }
+
+    .background-error {
+      background-color: #ef4444;
+    }
+
+    .loading-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="showcase-container">
+    <div class="showcase-header">
+      <h1 class="showcase-title" id="showcase-title">Component Showcase</h1>
+      <p class="showcase-description" id="showcase-description">Visual regression testing fixture</p>
+    </div>
+
+    <div id="showcase-content"></div>
+  </div>
+
+  <script type="module">
+    // Import components (update paths as needed)
+    import { Button } from '../../../src/ui/components/Button/Button.js';
+    import { ProgressBar } from '../../../src/ui/components/ProgressBar/ProgressBar.js';
+    import { Dialog } from '../../../src/ui/components/Dialog/Dialog.js';
+    import { Badge } from '../../../src/ui/components/Badge/Badge.js';
+    import { Toast } from '../../../src/ui/components/Toast/Toast.js';
+    import { Spinner } from '../../../src/ui/components/Spinner/Spinner.js';
+
+    // Parse URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const component = params.get('component');
+    const variant = params.get('variant');
+    const size = params.get('size');
+    const showcase = params.get('showcase');
+    const state = params.get('state');
+
+    const content = document.getElementById('showcase-content');
+    const title = document.getElementById('showcase-title');
+    const description = document.getElementById('showcase-description');
+
+    // Helper function to create showcase wrapper
+    function createShowcase(componentName) {
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('data-testid', `${componentName}-showcase`);
+      return wrapper;
+    }
+
+    // Button Component
+    if (component === 'button') {
+      title.textContent = 'Button Component';
+      description.textContent = `Variant: ${variant || 'all'}, Size: ${size || 'all'}, State: ${state || 'normal'}`;
+
+      const wrapper = createShowcase('button');
+
+      if (showcase === 'sizes') {
+        ['sm', 'md', 'lg'].forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = s.toUpperCase();
+
+          const button = new Button({ variant: 'primary', size: s }, `${s.toUpperCase()} Button`);
+          button.getElement().setAttribute('data-wc-component', 'button');
+
+          item.appendChild(label);
+          item.appendChild(button.getElement());
+          wrapper.appendChild(item);
+        });
+      } else if (showcase === 'icons') {
+        const iconSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+        ['left', 'right'].forEach(pos => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = `Icon ${pos}`;
+
+          const button = new Button({
+            variant: 'primary',
+            size: 'md',
+            icon: iconSvg,
+            iconPosition: pos
+          }, 'With Icon');
+          button.getElement().setAttribute('data-wc-component', 'button');
+
+          item.appendChild(label);
+          item.appendChild(button.getElement());
+          wrapper.appendChild(item);
+        });
+      } else if (showcase === 'icon-only') {
+        const iconSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+        ['sm', 'md', 'lg'].forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = s.toUpperCase();
+
+          const button = new Button({
+            variant: 'primary',
+            size: s,
+            icon: iconSvg,
+            iconOnly: true,
+            ariaLabel: 'Add item'
+          });
+          button.getElement().setAttribute('data-wc-component', 'button');
+
+          item.appendChild(label);
+          item.appendChild(button.getElement());
+          wrapper.appendChild(item);
+        });
+      } else if (state === 'disabled') {
+        ['primary', 'secondary', 'ghost', 'danger'].forEach(v => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = v;
+
+          const button = new Button({ variant: v, size: 'md', disabled: true }, 'Disabled');
+          button.getElement().setAttribute('data-wc-component', 'button');
+
+          item.appendChild(label);
+          item.appendChild(button.getElement());
+          wrapper.appendChild(item);
+        });
+      } else if (state === 'loading') {
+        ['primary', 'secondary', 'ghost', 'danger'].forEach(v => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = v;
+
+          const button = new Button({ variant: v, size: 'md', loading: true }, 'Loading');
+          button.getElement().setAttribute('data-wc-component', 'button');
+
+          item.appendChild(label);
+          item.appendChild(button.getElement());
+          wrapper.appendChild(item);
+        });
+      } else {
+        const v = variant || 'primary';
+        const s = size || 'md';
+        const button = new Button({ variant: v, size: s }, `${v} Button`);
+        button.getElement().setAttribute('data-wc-component', 'button');
+        wrapper.appendChild(button.getElement());
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    // Progress Bar Component
+    else if (component === 'progress-bar') {
+      title.textContent = 'Progress Bar Component';
+      description.textContent = `Variant: ${variant || 'linear'}`;
+
+      const wrapper = createShowcase('progress');
+
+      if (showcase === 'sizes') {
+        ['sm', 'md', 'lg'].forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = s.toUpperCase();
+
+          const progressWrapper = document.createElement('div');
+          progressWrapper.className = 'progress-wrapper';
+
+          const progress = new ProgressBar({
+            variant: variant || 'linear',
+            value: 60,
+            size: s,
+            ariaLabel: `${s} progress`
+          });
+          progress.getElement().setAttribute('data-wc-component', 'progress-bar');
+
+          progressWrapper.appendChild(progress.getElement());
+          item.appendChild(label);
+          item.appendChild(progressWrapper);
+          wrapper.appendChild(item);
+        });
+      } else {
+        const value = parseInt(params.get('value') || '50');
+        const v = variant || 'linear';
+        const s = size || 'md';
+
+        const progressWrapper = document.createElement('div');
+        progressWrapper.className = 'progress-wrapper';
+
+        const progress = new ProgressBar({
+          variant: v,
+          value: value,
+          size: s,
+          showPercentage: params.get('showPercentage') === 'true',
+          animated: params.get('animated') === 'true',
+          ariaLabel: 'Progress'
+        });
+        progress.getElement().setAttribute('data-wc-component', 'progress-bar');
+
+        progressWrapper.appendChild(progress.getElement());
+        wrapper.appendChild(progressWrapper);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    // Spinner Component
+    else if (component === 'spinner') {
+      title.textContent = 'Spinner Component';
+      description.textContent = `Size: ${size || 'md'}`;
+
+      const wrapper = createShowcase('spinner');
+
+      if (showcase === 'sizes') {
+        ['sm', 'md', 'lg'].forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = s.toUpperCase();
+
+          const spinner = new Spinner({ size: s, label: 'Loading' });
+          spinner.getElement().setAttribute('data-wc-component', 'spinner');
+
+          item.appendChild(label);
+          item.appendChild(spinner.getElement());
+          wrapper.appendChild(item);
+        });
+      } else if (showcase === 'colors') {
+        const colors = {
+          primary: '#3b82f6',
+          success: '#22c55e',
+          error: '#ef4444',
+          warning: '#f59e0b'
+        };
+
+        Object.entries(colors).forEach(([name, color]) => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = name;
+
+          const spinner = new Spinner({ size: 'md', color, label: 'Loading' });
+          spinner.getElement().setAttribute('data-wc-component', 'spinner');
+
+          item.appendChild(label);
+          item.appendChild(spinner.getElement());
+          wrapper.appendChild(item);
+        });
+      } else {
+        const s = size || 'md';
+        const spinner = new Spinner({ size: s, label: 'Loading' });
+        spinner.getElement().setAttribute('data-wc-component', 'spinner');
+        wrapper.appendChild(spinner.getElement());
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    // Badge Component
+    else if (component === 'badge') {
+      title.textContent = 'Badge Component';
+      description.textContent = `Variant: ${variant || 'default'}`;
+
+      const wrapper = createShowcase('badge');
+
+      if (showcase === 'variants') {
+        ['default', 'success', 'warning', 'error', 'info'].forEach(v => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = v;
+
+          const badge = new Badge({ variant: v, size: 'md', label: v.charAt(0).toUpperCase() + v.slice(1) });
+          badge.getElement().setAttribute('data-wc-component', 'badge');
+
+          item.appendChild(label);
+          item.appendChild(badge.getElement());
+          wrapper.appendChild(item);
+        });
+      } else if (showcase === 'sizes') {
+        ['sm', 'md'].forEach(s => {
+          const item = document.createElement('div');
+          item.className = 'showcase-item';
+
+          const label = document.createElement('span');
+          label.className = 'showcase-label';
+          label.textContent = s.toUpperCase();
+
+          const badge = new Badge({ variant: 'default', size: s, label: 'Badge' });
+          badge.getElement().setAttribute('data-wc-component', 'badge');
+
+          item.appendChild(label);
+          item.appendChild(badge.getElement());
+          wrapper.appendChild(item);
+        });
+      } else {
+        const v = variant || 'default';
+        const s = size || 'md';
+        const badge = new Badge({
+          variant: v,
+          size: s,
+          label: v.charAt(0).toUpperCase() + v.slice(1),
+          removable: params.get('removable') === 'true'
+        });
+        badge.getElement().setAttribute('data-wc-component', 'badge');
+        wrapper.appendChild(badge.getElement());
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    // Set page ready state
+    document.body.setAttribute('data-ready', 'true');
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+/**
+ * Web Clipper - Color Tokens
+ *
+ * Color palette with semantic aliases for light and dark modes.
+ * Uses :host, :root for Shadow DOM compatibility.
+ */
+
+:host, :root {
+  /* Primary - Actions, links, focus states */
+  --wc-primary-50: #eff6ff;
+  --wc-primary-100: #dbeafe;
+  --wc-primary-200: #bfdbfe;
+  --wc-primary-300: #93c5fd;
+  --wc-primary-400: #60a5fa;
+  --wc-primary-500: #3b82f6;
+  --wc-primary-600: #2563eb;
+  --wc-primary-700: #1d4ed8;
+  --wc-primary-800: #1e40af;
+  --wc-primary-900: #1e3a8a;
+  --wc-primary-950: #172554;
+
+  /* Success - Confirmations, completed states */
+  --wc-success-50: #f0fdf4;
+  --wc-success-100: #dcfce7;
+  --wc-success-200: #bbf7d0;
+  --wc-success-300: #86efac;
+  --wc-success-400: #4ade80;
+  --wc-success-500: #22c55e;
+  --wc-success-600: #16a34a;
+  --wc-success-700: #15803d;
+  --wc-success-800: #166534;
+  --wc-success-900: #14532d;
+  --wc-success-950: #052e16;
+
+  /* Warning - Cautions, pending states */
+  --wc-warning-50: #fffbeb;
+  --wc-warning-100: #fef3c7;
+  --wc-warning-200: #fde68a;
+  --wc-warning-300: #fcd34d;
+  --wc-warning-400: #fbbf24;
+  --wc-warning-500: #f59e0b;
+  --wc-warning-600: #d97706;
+  --wc-warning-700: #b45309;
+  --wc-warning-800: #92400e;
+  --wc-warning-900: #78350f;
+  --wc-warning-950: #451a03;
+
+  /* Error - Errors, destructive actions */
+  --wc-error-50: #fef2f2;
+  --wc-error-100: #fee2e2;
+  --wc-error-200: #fecaca;
+  --wc-error-300: #fca5a5;
+  --wc-error-400: #f87171;
+  --wc-error-500: #ef4444;
+  --wc-error-600: #dc2626;
+  --wc-error-700: #b91c1c;
+  --wc-error-800: #991b1b;
+  --wc-error-900: #7f1d1d;
+  --wc-error-950: #450a0a;
+
+  /* Neutral - Text, backgrounds, borders */
+  --wc-gray-50: #f9fafb;
+  --wc-gray-100: #f3f4f6;
+  --wc-gray-200: #e5e7eb;
+  --wc-gray-300: #d1d5db;
+  --wc-gray-400: #9ca3af;
+  --wc-gray-500: #6b7280;
+  --wc-gray-600: #4b5563;
+  --wc-gray-700: #374151;
+  --wc-gray-800: #1f2937;
+  --wc-gray-900: #111827;
+  --wc-gray-950: #030712;
+
+  /* Semantic Color Aliases - Light Mode (Default) */
+
+  /* Text Colors */
+  --wc-text-primary: var(--wc-gray-900);
+  --wc-text-secondary: var(--wc-gray-600);
+  --wc-text-tertiary: var(--wc-gray-500);
+  --wc-text-disabled: var(--wc-gray-400);
+  --wc-text-inverse: var(--wc-gray-50);
+  --wc-text-link: var(--wc-primary-600);
+  --wc-text-link-hover: var(--wc-primary-700);
+
+  /* Background Colors */
+  --wc-bg-primary: #ffffff;
+  --wc-bg-secondary: var(--wc-gray-50);
+  --wc-bg-tertiary: var(--wc-gray-100);
+  --wc-bg-overlay: rgba(0, 0, 0, 0.5);
+  --wc-bg-hover: var(--wc-gray-100);
+  --wc-bg-active: var(--wc-gray-200);
+
+  /* Border Colors */
+  --wc-border-default: var(--wc-gray-300);
+  --wc-border-subtle: var(--wc-gray-200);
+  --wc-border-strong: var(--wc-gray-400);
+  --wc-border-focus: var(--wc-primary-500);
+
+  /* Interactive State Colors */
+  --wc-interactive-default: var(--wc-primary-600);
+  --wc-interactive-hover: var(--wc-primary-700);
+  --wc-interactive-active: var(--wc-primary-800);
+  --wc-interactive-disabled: var(--wc-gray-300);
+
+  /* Surface Colors */
+  --wc-surface-default: #ffffff;
+  --wc-surface-elevated: #ffffff;
+  --wc-surface-sunken: var(--wc-gray-50);
+}
+
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+  :host, :root {
+    /* Semantic Color Aliases - Dark Mode */
+
+    /* Text Colors */
+    --wc-text-primary: var(--wc-gray-50);
+    --wc-text-secondary: var(--wc-gray-400);
+    --wc-text-tertiary: var(--wc-gray-500);
+    --wc-text-disabled: var(--wc-gray-600);
+    --wc-text-inverse: var(--wc-gray-900);
+    --wc-text-link: var(--wc-primary-400);
+    --wc-text-link-hover: var(--wc-primary-300);
+
+    /* Background Colors */
+    --wc-bg-primary: var(--wc-gray-900);
+    --wc-bg-secondary: var(--wc-gray-800);
+    --wc-bg-tertiary: var(--wc-gray-700);
+    --wc-bg-overlay: rgba(0, 0, 0, 0.7);
+    --wc-bg-hover: var(--wc-gray-800);
+    --wc-bg-active: var(--wc-gray-700);
+
+    /* Border Colors */
+    --wc-border-default: var(--wc-gray-700);
+    --wc-border-subtle: var(--wc-gray-800);
+    --wc-border-strong: var(--wc-gray-600);
+    --wc-border-focus: var(--wc-primary-500);
+
+    /* Interactive State Colors */
+    --wc-interactive-default: var(--wc-primary-500);
+    --wc-interactive-hover: var(--wc-primary-400);
+    --wc-interactive-active: var(--wc-primary-300);
+    --wc-interactive-disabled: var(--wc-gray-700);
+
+    /* Surface Colors */
+    --wc-surface-default: var(--wc-gray-900);
+    --wc-surface-elevated: var(--wc-gray-800);
+    --wc-surface-sunken: var(--wc-gray-950);
+  }
+}

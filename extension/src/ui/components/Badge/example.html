@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Badge Component Examples</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #f9fafb;
+    }
+
+    h1 {
+      margin-bottom: 32px;
+      color: #111827;
+    }
+
+    h2 {
+      margin-top: 32px;
+      margin-bottom: 16px;
+      color: #374151;
+      font-size: 18px;
+    }
+
+    .section {
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .label {
+      min-width: 120px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 13px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #111827;
+        color: #f9fafb;
+      }
+
+      h1 {
+        color: #f9fafb;
+      }
+
+      h2 {
+        color: #e5e7eb;
+      }
+
+      .section {
+        background: #1f2937;
+      }
+
+      .label {
+        color: #9ca3af;
+      }
+
+      code {
+        background: #374151;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Badge Component Examples</h1>
+
+  <div class="section">
+    <h2>Variants (Medium Size)</h2>
+    <div class="badge-row">
+      <span class="label">Default:</span>
+      <div id="badge-default"></div>
+    </div>
+    <div class="badge-row">
+      <span class="label">Success:</span>
+      <div id="badge-success"></div>
+    </div>
+    <div class="badge-row">
+      <span class="label">Warning:</span>
+      <div id="badge-warning"></div>
+    </div>
+    <div class="badge-row">
+      <span class="label">Error:</span>
+      <div id="badge-error"></div>
+    </div>
+    <div class="badge-row">
+      <span class="label">Info:</span>
+      <div id="badge-info"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Sizes</h2>
+    <div class="badge-row">
+      <span class="label">Small:</span>
+      <div id="badge-sm"></div>
+    </div>
+    <div class="badge-row">
+      <span class="label">Medium:</span>
+      <div id="badge-md"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>With Icons</h2>
+    <div class="badge-row">
+      <span class="label">Success Icon:</span>
+      <div id="badge-icon-success"></div>
+    </div>
+    <div class="badge-row">
+      <span class="label">Warning Icon:</span>
+      <div id="badge-icon-warning"></div>
+    </div>
+    <div class="badge-row">
+      <span class="label">Error Icon:</span>
+      <div id="badge-icon-error"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Removable Badges</h2>
+    <div class="badge-row">
+      <span class="label">Click X to remove:</span>
+      <div id="badge-removable-container"></div>
+    </div>
+    <div id="removed-badges" style="margin-top: 16px; color: #6b7280; font-size: 14px;"></div>
+  </div>
+
+  <div class="section">
+    <h2>Dynamic Updates</h2>
+    <div class="badge-row">
+      <span class="label">Status Badge:</span>
+      <div id="badge-dynamic"></div>
+      <button id="update-badge" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: white; cursor: pointer;">
+        Update Status
+      </button>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import the Badge component
+    import { createBadge, Badge } from './Badge.js';
+
+    // Variants
+    document.getElementById('badge-default').appendChild(
+      createBadge({ variant: 'default', size: 'md', label: 'Default' })
+    );
+    document.getElementById('badge-success').appendChild(
+      createBadge({ variant: 'success', size: 'md', label: 'Success' })
+    );
+    document.getElementById('badge-warning').appendChild(
+      createBadge({ variant: 'warning', size: 'md', label: 'Warning' })
+    );
+    document.getElementById('badge-error').appendChild(
+      createBadge({ variant: 'error', size: 'md', label: 'Error' })
+    );
+    document.getElementById('badge-info').appendChild(
+      createBadge({ variant: 'info', size: 'md', label: 'Info' })
+    );
+
+    // Sizes
+    document.getElementById('badge-sm').appendChild(
+      createBadge({ variant: 'default', size: 'sm', label: 'Small Badge' })
+    );
+    document.getElementById('badge-md').appendChild(
+      createBadge({ variant: 'default', size: 'md', label: 'Medium Badge' })
+    );
+
+    // With Icons
+    const checkIcon = `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const warningIcon = `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 2v4m0 2h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    const errorIcon = `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 3l6 6m0-6l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
+    document.getElementById('badge-icon-success').appendChild(
+      createBadge({ variant: 'success', size: 'md', label: 'Completed', icon: checkIcon })
+    );
+    document.getElementById('badge-icon-warning').appendChild(
+      createBadge({ variant: 'warning', size: 'md', label: 'Pending', icon: warningIcon })
+    );
+    document.getElementById('badge-icon-error').appendChild(
+      createBadge({ variant: 'error', size: 'md', label: 'Failed', icon: errorIcon })
+    );
+
+    // Removable badges
+    const removedList = [];
+    const container = document.getElementById('badge-removable-container');
+    const removedDisplay = document.getElementById('removed-badges');
+
+    const tags = ['JavaScript', 'TypeScript', 'React', 'Vue', 'Angular'];
+    tags.forEach(tag => {
+      const badge = createBadge({
+        variant: 'default',
+        size: 'md',
+        label: tag,
+        removable: true,
+        onRemove: () => {
+          removedList.push(tag);
+          removedDisplay.textContent = `Removed badges: ${removedList.join(', ')}`;
+        }
+      });
+      container.appendChild(badge);
+    });
+
+    // Dynamic updates
+    const dynamicBadge = new Badge({
+      variant: 'warning',
+      size: 'md',
+      label: 'Pending'
+    });
+    document.getElementById('badge-dynamic').appendChild(dynamicBadge.getElement());
+
+    const statuses = [
+      { variant: 'warning', label: 'Pending' },
+      { variant: 'info', label: 'Processing' },
+      { variant: 'success', label: 'Completed' }
+    ];
+    let currentStatus = 0;
+
+    document.getElementById('update-badge').addEventListener('click', () => {
+      currentStatus = (currentStatus + 1) % statuses.length;
+      const status = statuses[currentStatus];
+      dynamicBadge.setVariant(status.variant);
+      dynamicBadge.setLabel(status.label);
+    });
+  </script>
+</body>
+</html>

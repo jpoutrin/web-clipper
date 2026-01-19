@@ -1,4 +1,4 @@
-import { AuthState, ServerConfig, ClipPayload, CaptureResult } from '../types';
+import { AuthState, ServerConfig, ClipPayload, CaptureResult, ClipMode } from '../types';
 
 // DOM Elements
 const loginSection = document.getElementById('login-section')!;
@@ -12,14 +12,93 @@ const clipTagsInput = document.getElementById('clip-tags') as HTMLInputElement;
 const clipNotesInput = document.getElementById('clip-notes') as HTMLTextAreaElement;
 const clipBtn = document.getElementById('clip-btn') as HTMLButtonElement;
 const messageDiv = document.getElementById('message')!;
+const modeBtns = document.querySelectorAll('.mode-btn') as NodeListOf<HTMLButtonElement>;
 
 // State
 let authState: AuthState | null = null;
 let config: ServerConfig | null = null;
+let currentMode: ClipMode = 'article';
+
+// Mode button text mapping
+const modeButtonText: Record<ClipMode, string> = {
+  article: 'Clip Article',
+  bookmark: 'Save Bookmark',
+  screenshot: 'Capture Screenshot',
+  selection: 'Select Element',
+  fullpage: 'Capture Full Page',
+};
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
-  // Get current state from background
+  await refreshState();
+
+  // Pre-fill title from current tab
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.title) {
+    clipTitleInput.value = tab.title;
+  }
+
+  // Setup mode selector
+  setupModeSelector();
+});
+
+// Setup mode selector event handlers
+function setupModeSelector() {
+  modeBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // Update active state
+      modeBtns.forEach((b) => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+        b.setAttribute('tabindex', '-1');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      btn.setAttribute('tabindex', '0');
+
+      // Update current mode
+      currentMode = btn.getAttribute('data-mode') as ClipMode;
+
+      // Update clip button text
+      clipBtn.textContent = modeButtonText[currentMode];
+    });
+
+    // Keyboard navigation
+    btn.addEventListener('keydown', (e) => {
+      const btnsArray = Array.from(modeBtns);
+      const currentIndex = btnsArray.indexOf(btn);
+      let nextIndex = currentIndex;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          nextIndex = currentIndex > 0 ? currentIndex - 1 : btnsArray.length - 1;
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          nextIndex = currentIndex < btnsArray.length - 1 ? currentIndex + 1 : 0;
+          break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+          e.preventDefault();
+          nextIndex = parseInt(e.key) - 1;
+          break;
+        default:
+          return;
+      }
+
+      if (nextIndex !== currentIndex && btnsArray[nextIndex]) {
+        btnsArray[nextIndex].click();
+        btnsArray[nextIndex].focus();
+      }
+    });
+  });
+}
+
+// Refresh state from background
+async function refreshState() {
   const state = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
   authState = state.authState;
   config = state.serverConfig;
@@ -32,12 +111,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Update UI based on auth state
   updateUI();
 
-  // Pre-fill title from current tab
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab?.title) {
-    clipTitleInput.value = tab.title;
+  // Show appropriate message
+  if (authState?.accessToken) {
+    hideMessage();
   }
-});
+}
 
 // Update UI based on authentication state
 function updateUI() {
@@ -60,19 +138,23 @@ connectBtn.addEventListener('click', async () => {
   }
 
   setLoading(connectBtn, true);
+  showMessage('Opening login window...', 'info');
 
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'LOGIN',
-      payload: { serverUrl }
+      payload: { serverUrl },
     });
 
     if (response.error) {
       showMessage(response.error, 'error');
-    } else if (response.loginUrl) {
-      // Open login URL in new tab
-      chrome.tabs.create({ url: response.loginUrl });
-      showMessage('Please complete login in the opened tab', 'info');
+    } else if (response.success) {
+      // Update local state
+      const state = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+      authState = state.authState;
+      config = state.serverConfig;
+      updateUI();
+      showMessage('Connected successfully!', 'success');
     }
   } catch (err) {
     showMessage(`Connection failed: ${err}`, 'error');
@@ -94,7 +176,7 @@ devLoginBtn.addEventListener('click', async () => {
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'DEV_LOGIN',
-      payload: { serverUrl }
+      payload: { serverUrl },
     });
 
     if (response.error) {
@@ -117,7 +199,12 @@ devLoginBtn.addEventListener('click', async () => {
 // Logout button handler
 logoutBtn.addEventListener('click', async () => {
   await chrome.runtime.sendMessage({ type: 'LOGOUT' });
-  authState = { accessToken: null, refreshToken: null, expiresAt: null, serverUrl: authState?.serverUrl || '' };
+  authState = {
+    accessToken: null,
+    refreshToken: null,
+    expiresAt: null,
+    serverUrl: authState?.serverUrl || '',
+  };
   config = null;
   updateUI();
   showMessage('Logged out', 'info');
@@ -138,18 +225,66 @@ clipBtn.addEventListener('click', async () => {
     // Get config for image limits
     const captureConfig = {
       maxDimensionPx: config?.images.maxDimensionPx || 2048,
-      maxSizeBytes: config?.images.maxSizeBytes || 5242880
+      maxSizeBytes: config?.images.maxSizeBytes || 5242880,
     };
 
-    // Capture page content
-    showMessage('Capturing page...', 'info');
-    const captureResult = await chrome.tabs.sendMessage(tab.id, {
-      type: 'CAPTURE_PAGE',
-      payload: captureConfig
-    }) as CaptureResult;
+    let captureResult: CaptureResult;
+
+    switch (currentMode) {
+      case 'bookmark':
+        showMessage('Capturing bookmark...', 'info');
+        captureResult = await chrome.tabs.sendMessage(tab.id, {
+          type: 'CAPTURE_BOOKMARK',
+          payload: { config: captureConfig },
+        });
+        break;
+
+      case 'screenshot':
+        showMessage('Capturing screenshot...', 'info');
+        captureResult = await chrome.runtime.sendMessage({
+          type: 'CAPTURE_SCREENSHOT',
+        });
+        if ('error' in captureResult) {
+          showMessage(captureResult.error as string, 'error');
+          return;
+        }
+        break;
+
+      case 'selection':
+        showMessage('Click an element on the page to select it', 'info');
+        // Start selection mode and close popup
+        await chrome.tabs.sendMessage(tab.id, {
+          type: 'START_SELECTION_MODE',
+          payload: { config: captureConfig },
+        });
+        // Close popup - selection will be handled by content script
+        window.close();
+        return;
+
+      case 'fullpage':
+        showMessage('Capturing full page (this may take a moment)...', 'info');
+        captureResult = await chrome.tabs.sendMessage(tab.id, {
+          type: 'CAPTURE_FULLPAGE',
+          payload: { config: captureConfig },
+        });
+        break;
+
+      default:
+        // Article mode
+        showMessage('Capturing article...', 'info');
+        captureResult = await chrome.tabs.sendMessage(tab.id, {
+          type: 'CAPTURE_PAGE',
+          payload: captureConfig,
+        });
+    }
 
     if (!captureResult) {
       showMessage('Failed to capture page content', 'error');
+      return;
+    }
+
+    if ('error' in captureResult) {
+      showMessage(captureResult.error as string, 'error');
       return;
     }
 
@@ -157,17 +292,36 @@ clipBtn.addEventListener('click', async () => {
     const clipPayload: ClipPayload = {
       title: clipTitleInput.value || captureResult.title,
       url: captureResult.url,
-      markdown: captureResult.markdown,
-      tags: clipTagsInput.value.split(',').map(t => t.trim()).filter(t => t),
+      markdown: captureResult.markdown || '',
+      html: captureResult.html,
+      tags: clipTagsInput.value
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t),
       notes: clipNotesInput.value,
-      images: captureResult.images
+      images: captureResult.images || [],
+      mode: currentMode,
     };
+
+    // Add screenshot as image if present
+    if (captureResult.screenshot) {
+      clipPayload.images.push({
+        filename: captureResult.screenshot.filename,
+        data: captureResult.screenshot.data,
+        originalUrl: '',
+      });
+
+      // Generate markdown for screenshot mode
+      if (currentMode === 'screenshot') {
+        clipPayload.markdown = `# ${captureResult.title}\n\n![Screenshot](media/${captureResult.screenshot.filename})\n\n*Screenshot captured from ${new URL(captureResult.url).hostname} (${captureResult.screenshot.width}x${captureResult.screenshot.height})*\n`;
+      }
+    }
 
     // Submit to server
     showMessage('Saving clip...', 'info');
     const response = await chrome.runtime.sendMessage({
       type: 'SUBMIT_CLIP',
-      payload: clipPayload
+      payload: clipPayload,
     });
 
     if (response.success) {
