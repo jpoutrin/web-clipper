@@ -1,0 +1,39 @@
+# Web Clipper Production Configuration
+# Environment-specific values should be set in /etc/web-clipper/web-clipper.env
+
+server:
+  port: "${PORT:-3000}"
+  host: "0.0.0.0"
+  base_url: "${SERVER_BASE_URL:-http://localhost:3000}"
+
+oauth:
+  provider: "${OAUTH_PROVIDER:-keycloak}"
+  client_id: "${OAUTH_CLIENT_ID}"
+  client_secret: "${OAUTH_CLIENT_SECRET}"
+  redirect_url: "${OAUTH_REDIRECT_URL}"
+  # Access control (empty = allow all)
+  # allowed_domains: ["example.com"]
+  # allowed_emails: ["admin@example.com"]
+  keycloak:
+    realm: "${KEYCLOAK_REALM:-web-clipper}"
+    base_url: "${KEYCLOAK_BASE_URL}"
+
+storage:
+  base_path: "/var/lib/web-clipper/clips"
+  create_missing: true
+
+images:
+  max_size_bytes: 5242880      # 5MB per image
+  max_dimension_px: 2048       # Max width/height
+  max_total_bytes: 26214400    # 25MB total per clip
+  preserve_original: false
+
+jwt:
+  secret: "${JWT_SECRET}"
+  expiry_hours: 24
+
+dev_mode:
+  enabled: false
+
+admin:
+  allowed_paths: []

@@ -29,13 +29,18 @@ var (
 // application.
 func App() *buffalo.App {
 	appOnce.Do(func() {
-		// Load configuration
-		var err error
-		cfg, err = config.Load("config/clipper.yaml")
+		// Find and load configuration
+		configPath, err := config.FindConfigPath()
 		if err != nil {
-			log.Printf("Warning: Could not load config: %v", err)
-			// Use defaults for development
+			log.Printf("Warning: %v", err)
+			log.Println("Using default configuration")
 			cfg = &config.Config{}
+		} else {
+			cfg, err = config.Load(configPath)
+			if err != nil {
+				log.Printf("Warning: Could not load config from %s: %v", configPath, err)
+				cfg = &config.Config{}
+			}
 		}
 
 		// Log dev mode status

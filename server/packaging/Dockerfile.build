@@ -1,0 +1,36 @@
+# Dockerfile for ARM64 cross-compilation of Web Clipper
+# Used for building .deb packages for Raspberry Pi
+
+FROM golang:1.21-bookworm
+
+# Install cross-compilation tools
+RUN apt-get update && apt-get install -y \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    libc6-dev-arm64-cross \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install GoReleaser
+RUN curl -sL https://github.com/goreleaser/goreleaser/releases/download/v1.24.0/goreleaser_Linux_x86_64.tar.gz | \
+    tar xz -C /usr/local/bin goreleaser
+
+# Set up cross-compilation environment
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV GOARCH=arm64
+ENV CC=aarch64-linux-gnu-gcc
+ENV CXX=aarch64-linux-gnu-g++
+
+WORKDIR /build
+
+# Copy go mod files first for caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Default command runs goreleaser
+CMD ["goreleaser", "release", "--snapshot", "--clean"]

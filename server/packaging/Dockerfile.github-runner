@@ -1,0 +1,39 @@
+# Dockerfile that simulates GitHub Actions runner environment
+# Use this to test the full package build locally before pushing
+# Note: Uses linux/amd64 platform to match GitHub Actions runners
+
+FROM --platform=linux/amd64 ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies (matching GitHub Actions runner)
+RUN apt-get update && apt-get install -y \
+    # Cross-compilation tools for ARM64
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    libc6-dev-arm64-cross \
+    # Native build tools (x86_64)
+    gcc \
+    g++ \
+    libc6-dev \
+    # General tools
+    git \
+    curl \
+    ca-certificates \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Go 1.21
+RUN curl -sL https://go.dev/dl/go1.21.13.linux-amd64.tar.gz | tar -C /usr/local -xz
+ENV PATH="/usr/local/go/bin:/root/go/bin:${PATH}"
+ENV GOPATH="/root/go"
+
+# Install GoReleaser v2.13.3 (to match local version)
+RUN curl -sL https://github.com/goreleaser/goreleaser/releases/download/v2.13.3/goreleaser_Linux_x86_64.tar.gz | \
+    tar xz -C /usr/local/bin goreleaser
+
+WORKDIR /workspace
+
+# Default: run full snapshot build
+CMD ["make", "package-snapshot"]
