@@ -1,0 +1,50 @@
+[Unit]
+Description=Web Clipper Server
+Documentation=https://github.com/jpoutrin/web-clipper
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=web-clipper
+Group=web-clipper
+
+# Environment file with secrets
+EnvironmentFile=/etc/web-clipper/web-clipper.env
+
+# Set production environment
+Environment=GO_ENV=production
+Environment=DATABASE_URL=sqlite3:///var/lib/web-clipper/data/clipper.sqlite3
+
+# Working directory
+WorkingDirectory=/var/lib/web-clipper
+
+# Run the server
+ExecStart=/usr/bin/web-clipper
+
+# Restart on failure
+Restart=on-failure
+RestartSec=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=web-clipper
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ReadWritePaths=/var/lib/web-clipper /var/log/web-clipper
+
+# Resource limits (adjust as needed)
+MemoryMax=256M
+TasksMax=50
+
+[Install]
+WantedBy=multi-user.target

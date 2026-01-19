@@ -1,0 +1,16 @@
+# Local configuration overrides
+# Copy this file to /etc/web-clipper/clipper.local.yaml to customize settings
+# Values here override those in clipper.yaml
+
+# Example: Restrict access to specific domains
+# oauth:
+#   allowed_domains: ["mycompany.com"]
+
+# Example: Enable additional logging
+# server:
+#   log_level: debug
+
+# Example: Adjust image limits
+# images:
+#   max_size_bytes: 10485760  # 10MB per image
+#   max_total_bytes: 52428800 # 50MB total

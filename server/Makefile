@@ -1,4 +1,4 @@
-.PHONY: help dev build test clean migrate users-list users-show users-set-storage users-disable users-enable
+.PHONY: help dev build test clean migrate users-list users-show users-set-storage users-disable users-enable package-snapshot package-release package-arm64 package-local package-test
 
 # Default target - show help
 .DEFAULT_GOAL := help
@@ -49,7 +49,7 @@ clean:
 # Install dependencies
 deps:
 	go mod download
-	npm install
+	@command -v goreleaser >/dev/null 2>&1 || { echo "Installing goreleaser..."; go install github.com/goreleaser/goreleaser@latest; }
 
 # User management CLI commands
 users-list:
@@ -79,6 +79,28 @@ ifndef EMAIL
 endif
 	$(CGO_ENV) $(GRIFT) users:enable --email=$(EMAIL)
 
+# Packaging targets (requires goreleaser)
+# Build for current platform only (no cross-compilation, for local testing)
+package-local:
+	goreleaser build --snapshot --clean --single-target
+
+# Build all platforms (requires cross-compilation tools on Linux, or use Docker)
+package-snapshot:
+	goreleaser release --snapshot --clean
+
+package-release:
+	goreleaser release --clean
+
+# Build ARM64 package using Docker (for cross-compilation from non-ARM hosts)
+package-arm64:
+	docker build -f packaging/Dockerfile.build -t web-clipper-builder .
+	docker run --rm -v $(PWD)/dist:/build/dist web-clipper-builder
+
+# Test full build in GitHub Actions-like environment
+package-test:
+	docker build -f packaging/Dockerfile.github-runner -t web-clipper-gh-runner .
+	docker run --rm -v $(PWD):/workspace -w /workspace web-clipper-gh-runner
+
 # Help
 help:
 	@echo "Available targets:"
@@ -98,5 +120,12 @@ help:
 	@echo "  users-set-storage - Set user storage path (EMAIL=x PATH=y)"
 	@echo "  users-disable     - Disable a user (EMAIL=x)"
 	@echo "  users-enable      - Enable a user (EMAIL=x)"
+	@echo ""
+	@echo "Packaging:"
+	@echo "  package-local     - Build for current platform only (no cross-compile)"
+	@echo "  package-test      - Test full build in GitHub Actions-like Docker env"
+	@echo "  package-snapshot  - Build all platforms (requires cross-compile tools)"
+	@echo "  package-release   - Build release package"
+	@echo "  package-arm64     - Build ARM64 package via Docker"
 	@echo ""
 	@echo "Note: All targets include -tags sqlite for SQLite support"

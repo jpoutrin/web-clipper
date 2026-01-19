@@ -2,12 +2,43 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+// DefaultConfigPaths defines the search order for configuration files
+var DefaultConfigPaths = []string{
+	"/etc/web-clipper/clipper.yaml", // System installation (production)
+	"config/clipper.yaml",           // Development (relative to working dir)
+	"./clipper.yaml",                // Current directory
+}
+
+// FindConfigPath searches for the configuration file in standard locations.
+// It returns the path to the first existing config file, or an error if none found.
+func FindConfigPath() (string, error) {
+	// Allow override via environment variable
+	if envPath := os.Getenv("WEB_CLIPPER_CONFIG"); envPath != "" {
+		if _, err := os.Stat(envPath); err == nil {
+			log.Printf("Using config from WEB_CLIPPER_CONFIG: %s", envPath)
+			return envPath, nil
+		}
+		return "", fmt.Errorf("config file specified in WEB_CLIPPER_CONFIG not found: %s", envPath)
+	}
+
+	// Search default paths
+	for _, path := range DefaultConfigPaths {
+		if _, err := os.Stat(path); err == nil {
+			log.Printf("Using config file: %s", path)
+			return path, nil
+		}
+	}
+
+	return "", fmt.Errorf("no config file found in search paths: %v", DefaultConfigPaths)
+}
 
 type Config struct {
 	Server  ServerConfig  `yaml:"server"`

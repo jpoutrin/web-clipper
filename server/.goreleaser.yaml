@@ -1,0 +1,157 @@
+# GoReleaser configuration for Web Clipper
+# Documentation: https://goreleaser.com
+version: 2
+
+project_name: web-clipper
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: web-clipper
+    main: ./cmd/app
+    binary: web-clipper
+    env:
+      - CGO_ENABLED=1
+    flags:
+      - -tags=sqlite
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.date={{.Date}}
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    overrides:
+      - goos: linux
+        goarch: arm64
+        env:
+          - CC=aarch64-linux-gnu-gcc
+          - CXX=aarch64-linux-gnu-g++
+      - goos: linux
+        goarch: amd64
+        env:
+          - CC=gcc
+          - CXX=g++
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE*
+      - README*
+      - packaging/config/*
+      - packaging/systemd/*
+      - migrations/*
+
+nfpms:
+  - id: web-clipper-deb
+    package_name: web-clipper
+    vendor: Web Clipper
+    homepage: https://github.com/jpoutrin/web-clipper
+    maintainer: Jeremie Poutrin <jeremie@poutrin.net>
+    description: Web Clipper server for saving web pages
+    license: MIT
+    formats:
+      - deb
+
+    # Package dependencies
+    dependencies:
+      - libc6
+
+    # Recommended packages
+    recommends:
+      - sqlite3
+
+    # Binary is automatically included by GoReleaser at /usr/bin/web-clipper
+
+    # File contents
+    contents:
+      # Configuration files (marked as config files to preserve on upgrade)
+      - src: packaging/config/clipper.yaml
+        dst: /etc/web-clipper/clipper.yaml
+        type: config
+        file_info:
+          mode: 0644
+
+      - src: packaging/config/web-clipper.env
+        dst: /etc/web-clipper/web-clipper.env
+        type: config|noreplace
+        file_info:
+          mode: 0640
+
+      - src: packaging/config/database.yml
+        dst: /etc/web-clipper/database.yml
+        type: config
+        file_info:
+          mode: 0644
+
+      - src: packaging/config/clipper.local.yaml.example
+        dst: /etc/web-clipper/clipper.local.yaml.example
+        file_info:
+          mode: 0644
+
+      # systemd service
+      - src: packaging/systemd/web-clipper.service
+        dst: /lib/systemd/system/web-clipper.service
+        file_info:
+          mode: 0644
+
+      # Migrations
+      - src: migrations/
+        dst: /usr/share/web-clipper/migrations/
+
+      # Create empty directories
+      - dst: /var/lib/web-clipper/clips
+        type: dir
+        file_info:
+          mode: 0755
+
+      - dst: /var/lib/web-clipper/data
+        type: dir
+        file_info:
+          mode: 0755
+
+      - dst: /var/log/web-clipper
+        type: dir
+        file_info:
+          mode: 0755
+
+    # Package scripts
+    scripts:
+      postinstall: packaging/scripts/postinst.sh
+      preremove: packaging/scripts/prerm.sh
+      postremove: packaging/scripts/postrm.sh
+
+    # Debian-specific settings
+    deb:
+      lintian_overrides:
+        - statically-linked-binary
+        - changelog-file-missing-in-native-package
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: jpoutrin
+    name: web-clipper
+  draft: false
+  prerelease: auto
+  name_template: "v{{.Version}}"

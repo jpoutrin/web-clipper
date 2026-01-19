@@ -1,0 +1,12 @@
+# Database configuration for production
+# SQLite database is stored in /var/lib/web-clipper/data/
+
+production:
+  dialect: sqlite3
+  database: /var/lib/web-clipper/data/clipper.sqlite3
+  pool: 5
+  options:
+    _fk: true
+    _journal_mode: WAL
+    _synchronous: NORMAL
+    _busy_timeout: 5000
