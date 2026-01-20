@@ -7,9 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"server/internal/config"
 	"server/models"
 
 	"github.com/gobuffalo/buffalo"
+	"github.com/gobuffalo/nulls"
 	"github.com/gobuffalo/pop/v6"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth/gothic"
@@ -365,8 +367,9 @@ func authMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		cfg := GetConfig()
 
-		// Dev mode bypass - skip JWT validation entirely
-		if cfg != nil && cfg.DevMode.Enabled {
+		// Dev mode bypass - skip auth ONLY if no Authorization header provided
+		authHeader := c.Request().Header.Get("Authorization")
+		if cfg != nil && cfg.DevMode.Enabled && authHeader == "" {
 			c.Logger().Warn("DEV MODE: Authentication bypassed for request")
 
 			// Look up or create dev user to get their UUID
@@ -386,8 +389,6 @@ func authMiddleware(next buffalo.Handler) buffalo.Handler {
 			c.Set("user_email", user.Email)
 			return next(c)
 		}
-
-		authHeader := c.Request().Header.Get("Authorization")
 		if authHeader == "" {
 			return c.Error(http.StatusUnauthorized, fmt.Errorf("missing authorization header"))
 		}
@@ -398,50 +399,111 @@ func authMiddleware(next buffalo.Handler) buffalo.Handler {
 
 		tokenStr := authHeader[7:]
 
-		if cfg == nil || cfg.JWT.Secret == "" {
-			return c.Error(http.StatusInternalServerError, fmt.Errorf("JWT not configured"))
+		// Detect token type: service token starts with "wc_"
+		if strings.HasPrefix(tokenStr, "wc_") {
+			return validateServiceToken(c, tokenStr, next)
 		}
 
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method")
-			}
-			return []byte(cfg.JWT.Secret), nil
-		})
-		if err != nil || !token.Valid {
-			return c.Error(http.StatusUnauthorized, fmt.Errorf("invalid token"))
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			return c.Error(http.StatusUnauthorized, fmt.Errorf("invalid token claims"))
-		}
-
-		// Verify it's an access token
-		if claims["type"] != "access" {
-			return c.Error(http.StatusUnauthorized, fmt.Errorf("not an access token"))
-		}
-
-		userID := claims["sub"].(string)
-
-		// Check if user is disabled
-		tx := c.Value("tx").(*pop.Connection)
-		user := &models.User{}
-		if err := tx.Find(user, userID); err != nil {
-			return c.Error(http.StatusUnauthorized, fmt.Errorf("user not found"))
-		}
-
-		if user.Disabled {
-			c.Logger().Warnf("Access denied for disabled user: %s", user.Email)
-			return c.Error(http.StatusForbidden, fmt.Errorf("account is disabled"))
-		}
-
-		// Set user info in context for downstream handlers
-		c.Set("user_id", userID)
-		c.Set("user_email", claims["email"])
-
-		return next(c)
+		// Otherwise, validate as JWT token
+		return validateJWTToken(c, tokenStr, cfg, next)
 	}
+}
+
+// validateServiceToken validates service tokens (API keys)
+func validateServiceToken(c buffalo.Context, token string, next buffalo.Handler) error {
+	tx := c.Value("tx").(*pop.Connection)
+
+	// Hash the token
+	tokenHash := models.HashToken(token)
+
+	// Find token in database
+	apiToken, err := models.FindTokenByHash(tx, tokenHash)
+	if err != nil {
+		c.Logger().Warnf("Service token not found: %v", err)
+		return c.Error(http.StatusUnauthorized, fmt.Errorf("invalid service token"))
+	}
+
+	// Validate token
+	if !apiToken.IsValid() {
+		c.Logger().Warnf("Service token is revoked or expired: %s", apiToken.Prefix)
+		return c.Error(http.StatusUnauthorized, fmt.Errorf("service token is revoked or expired"))
+	}
+
+	// Get user
+	user := &models.User{}
+	if err := tx.Find(user, apiToken.UserID); err != nil {
+		c.Logger().Warnf("User not found for service token: %v", err)
+		return c.Error(http.StatusUnauthorized, fmt.Errorf("user not found"))
+	}
+
+	// Check if user is disabled
+	if user.Disabled {
+		c.Logger().Warnf("Access denied for disabled user via service token: %s", user.Email)
+		return c.Error(http.StatusForbidden, fmt.Errorf("account is disabled"))
+	}
+
+	// Update last_used_at (async, don't block request)
+	go func() {
+		apiToken.LastUsedAt = nulls.NewTime(time.Now())
+		tx.Update(apiToken)
+	}()
+
+	// Set user info in context
+	c.Set("user_id", user.ID.String())
+	c.Set("user_email", user.Email)
+	c.Set("auth_type", "service_token") // For logging/audit
+
+	c.Logger().Infof("Request authenticated via service token: %s (user: %s)",
+		apiToken.Prefix, user.Email)
+
+	return next(c)
+}
+
+// validateJWTToken validates JWT access tokens
+func validateJWTToken(c buffalo.Context, tokenStr string, cfg *config.Config, next buffalo.Handler) error {
+	if cfg == nil || cfg.JWT.Secret == "" {
+		return c.Error(http.StatusInternalServerError, fmt.Errorf("JWT not configured"))
+	}
+
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		return []byte(cfg.JWT.Secret), nil
+	})
+	if err != nil || !token.Valid {
+		return c.Error(http.StatusUnauthorized, fmt.Errorf("invalid token"))
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return c.Error(http.StatusUnauthorized, fmt.Errorf("invalid token claims"))
+	}
+
+	// Verify it's an access token
+	if claims["type"] != "access" {
+		return c.Error(http.StatusUnauthorized, fmt.Errorf("not an access token"))
+	}
+
+	userID := claims["sub"].(string)
+
+	// Check if user is disabled
+	tx := c.Value("tx").(*pop.Connection)
+	user := &models.User{}
+	if err := tx.Find(user, userID); err != nil {
+		return c.Error(http.StatusUnauthorized, fmt.Errorf("user not found"))
+	}
+
+	if user.Disabled {
+		c.Logger().Warnf("Access denied for disabled user: %s", user.Email)
+		return c.Error(http.StatusForbidden, fmt.Errorf("account is disabled"))
+	}
+
+	// Set user info in context for downstream handlers
+	c.Set("user_id", userID)
+	c.Set("user_email", claims["email"])
+
+	return next(c)
 }
 
 // Helper to convert int64 to string for URL params

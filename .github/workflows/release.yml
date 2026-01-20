@@ -9,7 +9,44 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  # Build Chrome extension
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: extension
+        run: npm ci
+
+      - name: Run tests
+        working-directory: extension
+        run: npm test
+
+      - name: Build and package extension
+        working-directory: extension
+        run: npm run package
+
+      - name: Rename zip with version
+        working-directory: extension
+        run: mv web-clipper.zip web-clipper-extension-${{ github.ref_name }}.zip
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension
+          path: extension/web-clipper-extension-${{ github.ref_name }}.zip
+
+  # Build server binaries
+  server:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,7 +57,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.23'
           cache-dependency-path: server/go.sum
 
       - name: Install cross-compilation tools
@@ -41,15 +78,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Notify on completion (optional)
+  # Upload extension to release
+  upload-extension:
+    needs: [extension, server]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chrome-extension
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: web-clipper-extension-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Notify on completion
   notify:
-    needs: release
+    needs: [extension, server, upload-extension]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Release status
         run: |
-          if [ "${{ needs.release.result }}" == "success" ]; then
+          if [ "${{ needs.server.result }}" == "success" ] && [ "${{ needs.extension.result }}" == "success" ]; then
             echo "Release completed successfully!"
           else
             echo "Release failed!"

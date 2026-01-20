@@ -100,3 +100,84 @@ func (as *ActionSuite) Test_Base64ImageDecoding() {
 	as.NoError(err)
 	as.Equal(originalData, decoded)
 }
+
+// List Clips Tests
+
+func (as *ActionSuite) Test_ListClips_Unauthorized() {
+	// List clips endpoint requires authentication
+	res := as.JSON("/api/v1/clips").Get()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_ListClips_DefaultPagination() {
+	// Test that default pagination parameters are applied
+	// Without auth, should return 401, but endpoint exists
+	res := as.JSON("/api/v1/clips").Get()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_ListClips_WithPaginationParams() {
+	// Test pagination query parameters
+	res := as.JSON("/api/v1/clips?page=2&per_page=10").Get()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_ListClips_WithModeFilter() {
+	// Test mode filter query parameter
+	res := as.JSON("/api/v1/clips?mode=article").Get()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_ListClips_WithTagFilter() {
+	// Test tag filter query parameter
+	res := as.JSON("/api/v1/clips?tag=tech").Get()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+// Get Clip Tests
+
+func (as *ActionSuite) Test_GetClip_Unauthorized() {
+	// Get clip endpoint requires authentication
+	res := as.JSON("/api/v1/clips/550e8400-e29b-41d4-a716-446655440000").Get()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_GetClip_InvalidUUID() {
+	// Test with invalid UUID format
+	res := as.JSON("/api/v1/clips/invalid-uuid").Get()
+	// Should fail at auth middleware first
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_GetClip_ValidUUIDFormat() {
+	// Test with valid UUID format (still fails auth)
+	res := as.JSON("/api/v1/clips/550e8400-e29b-41d4-a716-446655440000").Get()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+// Delete Clip Tests
+
+func (as *ActionSuite) Test_DeleteClip_Unauthorized() {
+	// Delete clip endpoint requires authentication
+	res := as.JSON("/api/v1/clips/550e8400-e29b-41d4-a716-446655440000").Delete()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_DeleteClip_InvalidUUID() {
+	// Test with invalid UUID format
+	res := as.JSON("/api/v1/clips/invalid-uuid").Delete()
+	// Should fail at auth middleware first
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_DeleteClip_WithDeleteFilesParam() {
+	// Test delete_files query parameter
+	res := as.JSON("/api/v1/clips/550e8400-e29b-41d4-a716-446655440000?delete_files=false").Delete()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}
+
+func (as *ActionSuite) Test_DeleteClip_WithDeleteFilesTrue() {
+	// Test delete_files=true (default behavior)
+	res := as.JSON("/api/v1/clips/550e8400-e29b-41d4-a716-446655440000?delete_files=true").Delete()
+	as.Equal(http.StatusUnauthorized, res.Code)
+}

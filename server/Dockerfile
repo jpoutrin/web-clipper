@@ -1,38 +1,81 @@
-# This is a multi-stage Dockerfile and requires >= Docker 17.05
-# https://docs.docker.com/engine/userguide/eng-image/multistage-build/
-FROM gobuffalo/buffalo:v0.18.14 as builder
+# Production Dockerfile for Synology NAS deployment
+# Supports both amd64 (Intel/AMD Synology) and arm64 (ARM Synology)
+#
+# Build: docker buildx build --platform linux/amd64,linux/arm64 -t your-registry/web-clipper:latest --push .
+# Or single arch: docker build -t web-clipper:latest .
 
-ENV GOPROXY http://proxy.golang.org
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
 
-RUN mkdir -p /src/web-clipper
-WORKDIR /src/web-clipper
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
+# Install build dependencies
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    sqlite-dev \
+    git
+
+WORKDIR /src
+
+# Copy go mod files first for caching
+COPY go.mod go.sum ./
 RUN go mod download
 
-ADD . .
-RUN buffalo build --static -o /bin/app
+# Copy source
+COPY . .
 
-FROM alpine
-RUN apk add --no-cache bash
-RUN apk add --no-cache ca-certificates
+# Build with CGO for SQLite support
+# CGO_CFLAGS needed for musl compatibility with go-sqlite3
+ENV CGO_ENABLED=1
+ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
+ENV GOOS=${TARGETOS}
+ENV GOARCH=${TARGETARCH}
 
-WORKDIR /bin/
+RUN go build -tags sqlite -ldflags="-s -w" -o /bin/web-clipper ./cmd/app
 
-COPY --from=builder /bin/app .
+# Runtime stage
+FROM alpine:3.19
 
-# Uncomment to run the binary in "production" mode:
-# ENV GO_ENV=production
+RUN apk add --no-cache \
+    ca-certificates \
+    sqlite \
+    tzdata \
+    busybox-extras
 
-# Bind the app to 0.0.0.0 so it can be seen from outside the container
+# Create non-root user
+RUN addgroup -g 1000 clipper && \
+    adduser -u 1000 -G clipper -s /bin/sh -D clipper
+
+# Create directories
+RUN mkdir -p /app/data /app/clips /app/config /app/migrations && \
+    chown -R clipper:clipper /app
+
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder /bin/web-clipper /app/web-clipper
+
+# Copy migrations
+COPY --chown=clipper:clipper migrations/ /app/migrations/
+
+# Copy default config
+COPY --chown=clipper:clipper packaging/config/clipper.yaml /app/config/clipper.yaml
+COPY --chown=clipper:clipper packaging/config/database.docker.yml /app/config/database.yml
+
+USER clipper
+
+# Environment
+ENV GO_ENV=production
 ENV ADDR=0.0.0.0
+ENV PORT=3000
 
 EXPOSE 3000
 
-# Uncomment to run the migrations before running the binary:
-# CMD /bin/app migrate; /bin/app
-CMD exec /bin/app
+# Health check (TCP port check)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD nc -z localhost 3000 || exit 1
+
+ENTRYPOINT ["/app/web-clipper"]

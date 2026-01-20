@@ -83,6 +83,10 @@ func App() *buffalo.App {
 		api.Use(authMiddleware)
 		api.GET("/config", getConfig)
 		api.POST("/clips", createClip)
+		api.GET("/clips", listClips)
+		api.GET("/clips/{id}", getClip)
+		api.GET("/clips/{id}/media/{filename}", getClipMedia)
+		api.DELETE("/clips/{id}", deleteClip)
 	})
 
 	return app
@@ -126,7 +130,7 @@ func setupOAuth() {
 func corsMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(c buffalo.Context) error {
 		c.Response().Header().Set("Access-Control-Allow-Origin", "*")
-		c.Response().Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Response().Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 		c.Response().Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 
 		if c.Request().Method == "OPTIONS" {

@@ -1,0 +1,46 @@
+# Docker Compose for Web Clipper on Synology NAS
+#
+# Usage:
+#   1. Set your Synology registry in .env or replace YOUR_SYNOLOGY_IP below
+#   2. docker compose up -d
+#
+# Push to Synology registry:
+#   docker login YOUR_SYNOLOGY_IP:5000
+#   docker compose build
+#   docker compose push
+
+services:
+  web-clipper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${REGISTRY:-localhost}/web-clipper:${TAG:-latest}
+    container_name: web-clipper
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persistent data
+      - web-clipper-data:/app/data
+      - web-clipper-clips:/app/clips
+      # Custom config (optional - uncomment to override)
+      # - ./config:/app/config:ro
+    environment:
+      - GO_ENV=production
+      - ADDR=0.0.0.0
+      - PORT=3000
+      - TZ=${TZ:-Europe/Paris}
+      # OAuth settings (configure these)
+      # - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      # - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # - SESSION_SECRET=${SESSION_SECRET}
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  web-clipper-data:
+  web-clipper-clips:

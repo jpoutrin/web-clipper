@@ -52,6 +52,31 @@ type StorageValidator interface {
 	GetEffectivePath(userID, customPath string) (string, error)
 }
 
+// TokenInfo represents API token information for display.
+type TokenInfo struct {
+	ID           string
+	Name         string
+	Prefix       string
+	ExpiresAt    string
+	LastUsedAt   string
+	Revoked      bool
+	RevokedAt    string
+	RevokedReason string
+	CreatedAt    string
+}
+
+// TokenService defines the interface for API token management operations.
+type TokenService interface {
+	// Create generates a new service token for a user.
+	Create(ctx context.Context, email, name string, expiryDuration string) (string, error)
+
+	// List returns all tokens for a user.
+	List(ctx context.Context, email string) ([]TokenInfo, error)
+
+	// Revoke marks a token as revoked with a reason.
+	Revoke(ctx context.Context, tokenID, reason string) error
+}
+
 // ServiceFactory creates service instances.
 type ServiceFactory interface {
 	// UserService returns a UserService instance.

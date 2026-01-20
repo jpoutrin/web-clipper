@@ -1,6 +1,6 @@
 module server
 
-go 1.25.5
+go 1.23.0
 
 require (
 	github.com/gobuffalo/buffalo v1.1.3
