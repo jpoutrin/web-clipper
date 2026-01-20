@@ -1,4 +1,4 @@
-.PHONY: help dev build test clean migrate users-list users-show users-set-storage users-disable users-enable package-snapshot package-release package-arm64 package-local package-test
+.PHONY: help dev build test clean migrate users-list users-show users-set-storage users-disable users-enable package-snapshot package-release package-arm64 package-local package-test docker-build docker-push docker-up docker-down
 
 # Default target - show help
 .DEFAULT_GOAL := help
@@ -128,4 +128,26 @@ help:
 	@echo "  package-release   - Build release package"
 	@echo "  package-arm64     - Build ARM64 package via Docker"
 	@echo ""
+	@echo "Docker (Synology):"
+	@echo "  docker-build      - Build Docker image"
+	@echo "  docker-push       - Push to registry (set REGISTRY in .env)"
+	@echo "  docker-up         - Start with docker compose"
+	@echo "  docker-down       - Stop containers"
+	@echo ""
 	@echo "Note: All targets include -tags sqlite for SQLite support"
+
+# Docker targets for Synology deployment
+REGISTRY ?= localhost:5000
+TAG ?= latest
+
+docker-build:
+	docker build -t $(REGISTRY)/web-clipper:$(TAG) .
+
+docker-push: docker-build
+	docker push $(REGISTRY)/web-clipper:$(TAG)
+
+docker-up:
+	docker compose up -d
+
+docker-down:
+	docker compose down

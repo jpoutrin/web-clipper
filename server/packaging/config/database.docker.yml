@@ -1,0 +1,12 @@
+# Database configuration for Docker deployment
+# SQLite database is stored in /app/data/
+
+production:
+  dialect: sqlite3
+  database: /app/data/clipper.sqlite3
+  pool: 5
+  options:
+    _fk: true
+    _journal_mode: WAL
+    _synchronous: NORMAL
+    _busy_timeout: 5000
