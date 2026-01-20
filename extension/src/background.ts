@@ -56,6 +56,11 @@ async function handleMessage(
 ): Promise<unknown> {
   switch (message.type) {
     case 'GET_STATE':
+      // Always load from storage to ensure we have the latest state
+      // (service worker may have restarted and lost in-memory state)
+      const stored = await chrome.storage.local.get(['authState', 'serverConfig']);
+      if (stored.authState) authState = stored.authState as AuthState;
+      if (stored.serverConfig) serverConfig = stored.serverConfig as ServerConfig;
       return { authState, serverConfig };
 
     case 'LOGIN':
