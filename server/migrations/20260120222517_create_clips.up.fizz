@@ -1,0 +1,13 @@
+create_table("clips") {
+  t.Column("id", "uuid", {primary: true})
+  t.Column("user_id", "uuid", {})
+  t.Column("title", "string", {})
+  t.Column("url", "text", {})
+  t.Column("path", "string", {})
+  t.Column("mode", "string", {default: "article"})
+  t.Column("tags", "text", {null: true})
+  t.Column("notes", "text", {null: true})
+  t.Timestamps()
+}
+
+add_index("clips", "user_id", {})

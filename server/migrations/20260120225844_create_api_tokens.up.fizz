@@ -1,0 +1,17 @@
+create_table("api_tokens") {
+  t.Column("id", "uuid", {primary: true})
+  t.Column("user_id", "uuid", {})
+  t.Column("name", "string", {})
+  t.Column("token_hash", "string", {})
+  t.Column("prefix", "string", {})
+  t.Column("last_used_at", "timestamp", {null: true})
+  t.Column("expires_at", "timestamp", {null: true})
+  t.Column("revoked", "bool", {default: false})
+  t.Column("revoked_at", "timestamp", {null: true})
+  t.Column("revoked_reason", "text", {null: true})
+  t.Timestamps()
+}
+
+add_index("api_tokens", "user_id", {})
+add_index("api_tokens", "token_hash", {unique: true})
+add_index("api_tokens", "prefix", {})

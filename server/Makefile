@@ -1,4 +1,4 @@
-.PHONY: help dev build test clean migrate users-list users-show users-set-storage users-disable users-enable package-snapshot package-release package-arm64 package-local package-test docker-build docker-push docker-up docker-down
+.PHONY: help dev build test clean migrate users-list users-show users-set-storage users-disable users-enable package-snapshot package-release package-arm64 package-local package-test docker-build docker-push docker-up docker-down docker-logs docker-restart
 
 # Default target - show help
 .DEFAULT_GOAL := help
@@ -79,6 +79,28 @@ ifndef EMAIL
 endif
 	$(CGO_ENV) $(GRIFT) users:enable --email=$(EMAIL)
 
+# Token management CLI commands
+tokens-create:
+ifndef EMAIL
+	$(error EMAIL is required. Usage: make tokens-create EMAIL=user@example.com NAME="API Name" [EXPIRY=365d])
+endif
+ifndef NAME
+	$(error NAME is required. Usage: make tokens-create EMAIL=user@example.com NAME="API Name" [EXPIRY=365d])
+endif
+	$(CGO_ENV) $(GRIFT) tokens:create --email=$(EMAIL) --name="$(NAME)" $(if $(EXPIRY),--expiry=$(EXPIRY))
+
+tokens-list:
+ifndef EMAIL
+	$(error EMAIL is required. Usage: make tokens-list EMAIL=user@example.com)
+endif
+	$(CGO_ENV) $(GRIFT) tokens:list --email=$(EMAIL)
+
+tokens-revoke:
+ifndef ID
+	$(error ID is required. Usage: make tokens-revoke ID=token-uuid [REASON="reason"])
+endif
+	$(CGO_ENV) $(GRIFT) tokens:revoke --id=$(ID) $(if $(REASON),--reason="$(REASON)")
+
 # Packaging targets (requires goreleaser)
 # Build for current platform only (no cross-compilation, for local testing)
 package-local:
@@ -121,6 +143,11 @@ help:
 	@echo "  users-disable     - Disable a user (EMAIL=x)"
 	@echo "  users-enable      - Enable a user (EMAIL=x)"
 	@echo ""
+	@echo "Token management:"
+	@echo "  tokens-create     - Create service token (EMAIL=x NAME=y [EXPIRY=365d])"
+	@echo "  tokens-list       - List user's tokens (EMAIL=x)"
+	@echo "  tokens-revoke     - Revoke token (ID=x [REASON=y])"
+	@echo ""
 	@echo "Packaging:"
 	@echo "  package-local     - Build for current platform only (no cross-compile)"
 	@echo "  package-test      - Test full build in GitHub Actions-like Docker env"
@@ -128,17 +155,22 @@ help:
 	@echo "  package-release   - Build release package"
 	@echo "  package-arm64     - Build ARM64 package via Docker"
 	@echo ""
-	@echo "Docker (Synology):"
+	@echo "Docker (Synology/Colima):"
 	@echo "  docker-build      - Build Docker image"
 	@echo "  docker-push       - Push to registry (set REGISTRY in .env)"
-	@echo "  docker-up         - Start with docker compose"
+	@echo "  docker-up         - Start with docker-compose"
 	@echo "  docker-down       - Stop containers"
+	@echo "  docker-logs       - View container logs"
+	@echo "  docker-restart    - Restart containers"
 	@echo ""
 	@echo "Note: All targets include -tags sqlite for SQLite support"
 
 # Docker targets for Synology deployment
 REGISTRY ?= localhost:5000
 TAG ?= latest
+
+# Detect docker compose command (v2 plugin vs v1 standalone)
+DOCKER_COMPOSE := $(shell docker compose version > /dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
 docker-build:
 	docker build -t $(REGISTRY)/web-clipper:$(TAG) .
@@ -147,7 +179,13 @@ docker-push: docker-build
 	docker push $(REGISTRY)/web-clipper:$(TAG)
 
 docker-up:
-	docker compose up -d
+	$(DOCKER_COMPOSE) up -d
 
 docker-down:
-	docker compose down
+	$(DOCKER_COMPOSE) down
+
+docker-logs:
+	$(DOCKER_COMPOSE) logs -f
+
+docker-restart:
+	$(DOCKER_COMPOSE) restart

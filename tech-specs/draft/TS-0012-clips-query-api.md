@@ -974,3 +974,11 @@ make migrate
 # Rollback if needed
 buffalo pop migrate down -s 1
 ```
+
+---
+
+## Implementation Tracking
+
+Task List: ../tasks/TS-0012-clips-query-api-tasks.md
+Generated: 2026-01-20
+Status: See task file for current progress

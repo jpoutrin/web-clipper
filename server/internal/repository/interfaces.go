@@ -20,3 +20,21 @@ type UserRepository interface {
 	// Update persists changes to an existing user.
 	Update(ctx context.Context, user *models.User) error
 }
+
+// ApiTokenRepository defines the interface for API token data access.
+type ApiTokenRepository interface {
+	// FindByUserID returns all tokens for a user.
+	FindByUserID(ctx context.Context, userID string) (models.ApiTokens, error)
+
+	// FindByHash finds a token by its hash.
+	FindByHash(ctx context.Context, tokenHash string) (*models.ApiToken, error)
+
+	// Create persists a new API token.
+	Create(ctx context.Context, token *models.ApiToken) error
+
+	// Update persists changes to an existing token.
+	Update(ctx context.Context, token *models.ApiToken) error
+
+	// Revoke marks a token as revoked with a reason.
+	Revoke(ctx context.Context, id string, reason string) error
+}
