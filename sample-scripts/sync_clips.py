@@ -12,6 +12,8 @@ Usage:
 Features:
     - Downloads all clips with content and images
     - Organizes by mode (article, bookmark, screenshot, etc.)
+    - Folder naming: {date}_{title-slug}_{site-slug} (e.g., 20260121_my-article_github-com)
+    - Content saved as {folder-name}.md (not content.md)
     - Preserves metadata in JSON sidecar files
     - Incremental sync (skips existing clips)
 """
@@ -101,19 +103,62 @@ class WebClipperSync:
         # Limit length
         return filename[:200]
 
+    def slugify(self, text):
+        """Convert text to URL-friendly slug."""
+        import re
+        # Convert to lowercase
+        slug = text.lower()
+        # Replace spaces and underscores with hyphens
+        slug = slug.replace(' ', '-').replace('_', '-')
+        # Remove non-alphanumeric characters except hyphens
+        slug = re.sub(r'[^a-z0-9-]', '', slug)
+        # Replace multiple consecutive hyphens with single hyphen
+        slug = re.sub(r'-+', '-', slug)
+        # Remove leading/trailing hyphens
+        slug = slug.strip('-')
+        # Limit length
+        return slug[:200]
+
+    def extract_site_slug(self, url):
+        """Extract and slugify site name from URL."""
+        from urllib.parse import urlparse
+        try:
+            parsed = urlparse(url)
+            domain = parsed.netloc or parsed.path.split('/')[0]
+            # Remove www. prefix
+            domain = domain.replace('www.', '')
+            # Slugify the domain
+            return self.slugify(domain)
+        except:
+            return 'unknown-site'
+
+    def format_date(self, timestamp_str):
+        """Format ISO timestamp to YYYYMMDD."""
+        try:
+            # Parse ISO format: 2026-01-21T12:34:56Z
+            dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+            return dt.strftime('%Y%m%d')
+        except:
+            # Fallback to today's date
+            return datetime.utcnow().strftime('%Y%m%d')
+
     def save_clip(self, clip_detail):
         """Save clip to local filesystem."""
         clip_id = clip_detail['id']
         mode = clip_detail.get('mode', 'article')
         title = clip_detail.get('title', 'untitled')
+        url = clip_detail.get('url', '')
+        created_at = clip_detail.get('created_at', '')
 
         # Create mode subdirectory
         mode_dir = self.output_dir / mode
         mode_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create clip directory with sanitized title
-        safe_title = self.sanitize_filename(title)
-        clip_dir_name = f"{clip_id[:8]}_{safe_title}"
+        # Create clip directory with format: {date}_{title}_{site}
+        date_part = self.format_date(created_at)
+        title_part = self.slugify(title)
+        site_part = self.extract_site_slug(url)
+        clip_dir_name = f"{date_part}_{title_part}_{site_part}"
         clip_dir = mode_dir / clip_dir_name
 
         # Skip if already exists
@@ -125,9 +170,9 @@ class WebClipperSync:
         clip_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            # Save main content
+            # Save main content to {folder_name}.md instead of content.md
             content = clip_detail.get('content', '')
-            content_file = clip_dir / 'content.md'
+            content_file = clip_dir / f'{clip_dir_name}.md'
             content_file.write_text(content, encoding='utf-8')
 
             # Save metadata
@@ -147,18 +192,18 @@ class WebClipperSync:
             # Download images if present
             images = clip_detail.get('images', [])
             if images:
-                images_dir = clip_dir / 'images'
-                images_dir.mkdir(exist_ok=True)
+                media_dir = clip_dir / 'media'
+                media_dir.mkdir(exist_ok=True)
 
                 for img in images:
                     img_filename = img.get('filename', 'image.png')
-                    img_file = images_dir / img_filename
+                    img_file = media_dir / img_filename
 
                     # Download actual image file from the media endpoint
                     if self.download_image(clip_id, img_filename, img_file):
-                        print(f"   📷 Downloaded image: {img_filename}")
+                        print(f"   📷 Downloaded media: {img_filename}")
                     else:
-                        print(f"   ⚠️  Failed to download image: {img_filename}")
+                        print(f"   ⚠️  Failed to download media: {img_filename}")
 
             print(f"✅ Synced: {title}")
             self.stats['downloaded'] += 1
