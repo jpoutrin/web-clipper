@@ -6,9 +6,15 @@ Thank you for choosing Buffalo for your web development needs.
 
 It looks like you chose to set up your application using a database! Fantastic!
 
-The first thing you need to do is open up the "database.yml" file and edit it to use the correct usernames, passwords, hosts, etc... that are appropriate for your environment.
+The server uses a `database.yml` configuration file that includes important SQLite optimizations like connection pooling, WAL mode, foreign key enforcement, and busy timeout settings.
 
-You will also need to make sure that **you** start/install the database of your choice. Buffalo **won't** install and start it for you.
+**Configuration file locations:**
+- Development: `./database.yml` (in the project directory)
+- Production: `/etc/web-clipper/database.yml` (installed by the package)
+
+The server automatically searches both locations, so no environment variables are needed.
+
+Open the `database.yml` file and edit it to use the correct settings for your environment if needed. For SQLite (the default), the production configuration already includes recommended optimizations.
 
 ### Create Your Databases
 

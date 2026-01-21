@@ -28,6 +28,7 @@ chmod 640 /etc/web-clipper/web-clipper.env
 chown root:web-clipper /etc/web-clipper/clipper.yaml
 chmod 644 /etc/web-clipper/clipper.yaml
 
+# Set permissions on database.yml (contains pool size, WAL mode, etc.)
 if [ -f /etc/web-clipper/database.yml ]; then
     chown root:web-clipper /etc/web-clipper/database.yml
     chmod 644 /etc/web-clipper/database.yml

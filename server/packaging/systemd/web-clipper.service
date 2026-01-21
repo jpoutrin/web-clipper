@@ -14,7 +14,6 @@ EnvironmentFile=/etc/web-clipper/web-clipper.env
 
 # Set production environment
 Environment=GO_ENV=production
-Environment=DATABASE_URL=sqlite3:///var/lib/web-clipper/data/clipper.sqlite3
 
 # Working directory
 WorkingDirectory=/var/lib/web-clipper
