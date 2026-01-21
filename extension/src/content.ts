@@ -142,11 +142,27 @@ function cancelSelectionMode(): { cancelled: boolean } {
 }
 
 /**
- * Capture article using Readability with embedded content capture
+ * Placeholder info for restoring original embed elements
  */
-export async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
-  // 1. Find the article element FIRST to scope embed detection
-  // Common article selectors used by news sites
+interface EmbedPlaceholder {
+  placeholder: HTMLElement;
+  original: HTMLElement;
+  parent: HTMLElement | null;
+}
+
+/**
+ * Result of detecting and preparing embeds
+ */
+interface PreparedEmbeds {
+  detectedEmbeds: ReturnType<typeof safeDetectEmbeds>;
+  embedPlaceholders: EmbedPlaceholder[];
+}
+
+/**
+ * Find the article element using common selectors
+ * Returns null if no article element is found
+ */
+function findArticleElement(): HTMLElement | null {
   const articleSelectors = [
     'article',
     '[role="article"]',
@@ -159,16 +175,22 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     '.story-body',
   ];
 
-  let articleElement: HTMLElement | null = null;
   for (const selector of articleSelectors) {
-    articleElement = document.querySelector(selector);
-    if (articleElement) {
+    const element = document.querySelector<HTMLElement>(selector);
+    if (element) {
       console.log(`[WebClipper] Found article element: ${selector}`);
-      break;
+      return element;
     }
   }
 
-  // 2. Detect embeds WITHIN the article element only
+  return null;
+}
+
+/**
+ * Detect embeds and replace them with placeholders before Readability processing
+ * This ensures the placeholders survive Readability's DOM manipulation
+ */
+function detectAndPrepareEmbeds(articleElement: HTMLElement | null): PreparedEmbeds {
   console.log('[WebClipper] Detecting embedded content...');
   const detectedEmbeds = safeDetectEmbeds(
     DEFAULT_EMBED_CONFIG,
@@ -176,9 +198,9 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
   );
   console.log(`[WebClipper] Found ${detectedEmbeds.length} embeds within article`);
 
-  // 3. Replace embed elements with placeholder divs BEFORE cloning
+  // Replace embed elements with placeholder divs BEFORE cloning
   // Readability strips iframes, so we need text-based placeholders that will survive
-  const embedPlaceholders: Array<{ placeholder: HTMLElement; original: HTMLElement; parent: HTMLElement | null }> = [];
+  const embedPlaceholders: EmbedPlaceholder[] = [];
   detectedEmbeds.forEach((detected, index) => {
     const placeholder = document.createElement('div');
     placeholder.setAttribute('data-webclipper-embed-id', String(index));
@@ -195,8 +217,17 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     }
   });
 
-  // 4. Capture embeds (screenshots)
+  return { detectedEmbeds, embedPlaceholders };
+}
+
+/**
+ * Capture embed screenshots and create a map for quick lookup
+ */
+async function captureEmbedScreenshots(
+  detectedEmbeds: ReturnType<typeof safeDetectEmbeds>
+): Promise<Map<string, CapturedEmbed>> {
   let capturedEmbeds: CapturedEmbed[] = [];
+
   if (detectedEmbeds.length > 0) {
     console.log('[WebClipper] Capturing embedded content...');
     capturedEmbeds = await safeCaptureAllEmbeds(detectedEmbeds, DEFAULT_EMBED_CONFIG);
@@ -214,10 +245,24 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     }
   });
 
-  // 5. Extract images from ORIGINAL document BEFORE Readability processing
-  // This ensures we get the correct original URLs before they're modified
-  const imageMap = new Map<string, string>(); // originalUrl -> localFilename
-  const imageAltMap = new Map<string, string>(); // alt text -> filename (fallback matching)
+  return embedDataMap;
+}
+
+/**
+ * Result of extracting image URLs from the document
+ */
+interface ImageExtractionResult {
+  imageMap: Map<string, string>; // originalUrl -> localFilename
+  imageAltMap: Map<string, string>; // alt text -> filename (fallback)
+}
+
+/**
+ * Extract images from the original document before Readability processing
+ * This ensures we get the correct original URLs before they're modified
+ */
+function extractImageMap(articleElement: HTMLElement | null): ImageExtractionResult {
+  const imageMap = new Map<string, string>();
+  const imageAltMap = new Map<string, string>();
   let imageIndex = 0;
 
   // Extract from the found article element, or fallback to entire document
@@ -242,7 +287,6 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     if (!src) {
       const srcset = img.getAttribute('srcset') || img.getAttribute('data-srcset');
       if (srcset) {
-        // Parse srcset and get the first URL
         const firstSrc = srcset.split(',')[0]?.trim().split(' ')[0];
         if (firstSrc) src = firstSrc;
       }
@@ -300,46 +344,53 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
 
   console.log(`[WebClipper] Found ${imageMap.size} unique images to extract`);
 
-  // 6. Clone document for Readability (it modifies the DOM)
+  return { imageMap, imageAltMap };
+}
+
+/**
+ * Clone the document for Readability and restore original DOM by removing placeholders
+ */
+function cloneAndRestoreDocument(embedPlaceholders: EmbedPlaceholder[]): Document {
+  // Clone document for Readability (it modifies the DOM)
   const documentClone = document.cloneNode(true) as Document;
 
-  // 7. Restore original DOM by removing placeholders
+  // Restore original DOM by removing placeholders
   embedPlaceholders.forEach(({ placeholder, parent }) => {
     if (parent && placeholder.parentElement === parent) {
       parent.removeChild(placeholder);
     }
   });
 
-  // Extract article content using Readability
+  return documentClone;
+}
+
+/**
+ * Parse the article content using Mozilla Readability
+ * Returns null if article extraction fails
+ */
+function parseWithReadability(documentClone: Document): ReturnType<Readability['parse']> {
   const reader = new Readability(documentClone);
-  const article = reader.parse();
+  return reader.parse();
+}
 
-  if (!article) {
-    return {
-      mode: 'article',
-      title: document.title,
-      url: window.location.href,
-      markdown: '# ' + document.title + '\n\n*Could not extract article content*',
-      images: [],
-    };
-  }
-
-  // Create a temporary div to parse the HTML content
+/**
+ * Clean article content by removing ads, related articles, and unmapped images
+ */
+function cleanArticleContent(
+  articleContent: string,
+  imageMap: Map<string, string>,
+  imageAltMap: Map<string, string>
+): HTMLDivElement {
   const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = article.content || '';
+  tempDiv.innerHTML = articleContent;
 
-  // Apply enhanced content filters (link density, etc.)
-  // Based on Evernote Clearly's proven heuristics
-  const filterStats = applyContentFilters(tempDiv, {
-    debug: false, // Set to true for debugging filter decisions
-  });
+  // Apply enhanced content filters
+  const filterStats = applyContentFilters(tempDiv, { debug: false });
   console.log('[WebClipper] Content filter stats:', filterStats);
 
-  // Remove unwanted elements from Readability output
-  // Only target container elements (div, section, aside, nav, footer) - never remove headings or paragraphs
   const containerTags = ['DIV', 'SECTION', 'ASIDE', 'NAV', 'FOOTER', 'FIGURE'];
 
-  // 1. Related articles sections
+  // Remove related articles sections
   const relatedSelectors = [
     '[class*="related"]',
     '[class*="similar"]',
@@ -354,14 +405,13 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
   ];
   relatedSelectors.forEach((selector) => {
     tempDiv.querySelectorAll(selector).forEach((el) => {
-      // Only remove container elements, preserve headings and paragraphs
       if (containerTags.includes(el.tagName)) {
         el.remove();
       }
     });
   });
 
-  // 2. Ad skip links and ad containers
+  // Remove ad containers
   const adSelectors = [
     'a[href*="skip"]',
     'a[href*="publicite"]',
@@ -389,7 +439,7 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     tempDiv.querySelectorAll(selector).forEach((el) => el.remove());
   });
 
-  // 3. Remove ad-related text nodes/links (French and English patterns)
+  // Remove ad-related text nodes
   const adTextPatterns = [
     'Passer la publicité',
     'publicité',
@@ -405,7 +455,6 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
   const nodesToRemove: Node[] = [];
   while (walker.nextNode()) {
     const text = walker.currentNode.textContent || '';
-    // Check if the text is primarily an ad label (short text matching ad patterns)
     if (text.trim().length < 50 && adTextPatterns.some((pattern) => text.includes(pattern))) {
       nodesToRemove.push(walker.currentNode.parentElement || walker.currentNode);
     }
@@ -416,8 +465,7 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     }
   });
 
-  // Remove images we couldn't map and clean up lazy-loading attributes
-  // Do NOT update src to avoid browser fetching placeholder URLs
+  // Remove unmapped images and clean up lazy-loading attributes
   tempDiv.querySelectorAll('img').forEach((img) => {
     let src = img.getAttribute('src') ||
               img.getAttribute('data-src') ||
@@ -425,7 +473,6 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
 
     let found = false;
 
-    // Check if we have this image in our map
     if (src) {
       try {
         const absoluteSrc = new URL(src, window.location.href).href;
@@ -444,14 +491,12 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     }
 
     if (!found) {
-      // Remove images we couldn't map (likely external/ad images)
       const parent = img.parentElement;
       if (parent) {
         parent.removeChild(img);
       }
     } else {
-      // Clean up lazy-loading attributes but DON'T modify src
-      // Turndown rule will handle the mapping
+      // Clean up lazy-loading attributes
       img.removeAttribute('data-src');
       img.removeAttribute('data-lazy-src');
       img.removeAttribute('srcset');
@@ -459,7 +504,18 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     }
   });
 
-  // Convert HTML to Markdown
+  return tempDiv;
+}
+
+/**
+ * Convert cleaned HTML to Markdown with image and embed mappings
+ */
+function convertToMarkdown(
+  cleanedHTML: string,
+  imageMap: Map<string, string>,
+  imageAltMap: Map<string, string>,
+  embedDataMap: Map<string, CapturedEmbed>
+): string {
   const turndownService = new TurndownService({
     headingStyle: 'atx',
     codeBlockStyle: 'fenced',
@@ -504,7 +560,7 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     },
   });
 
-  let markdown = turndownService.turndown(tempDiv.innerHTML);
+  let markdown = turndownService.turndown(cleanedHTML);
 
   // Replace embed placeholders with actual embed images
   embedDataMap.forEach((captured, embedId) => {
@@ -522,11 +578,52 @@ export async function captureArticle(config: CaptureConfig): Promise<CaptureResu
     markdown = markdown.replace(placeholder, embedMarkdown);
   });
 
+  return markdown;
+}
+
+/**
+ * Capture article using Readability with embedded content capture
+ */
+export async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
+  // 1. Find the article element FIRST to scope embed detection
+  const articleElement = findArticleElement();
+
+  // 2. Detect embeds and prepare placeholders
+  const { detectedEmbeds, embedPlaceholders } = detectAndPrepareEmbeds(articleElement);
+
+  // 3. Capture embed screenshots
+  const embedDataMap = await captureEmbedScreenshots(detectedEmbeds);
+
+  // 4. Extract images from original document before Readability processing
+  const { imageMap, imageAltMap } = extractImageMap(articleElement);
+
+  // 5. Clone document and restore original DOM
+  const documentClone = cloneAndRestoreDocument(embedPlaceholders);
+
+  // 6. Parse article with Readability
+  const article = parseWithReadability(documentClone);
+
+  if (!article) {
+    return {
+      mode: 'article',
+      title: document.title,
+      url: window.location.href,
+      markdown: '# ' + document.title + '\n\n*Could not extract article content*',
+      images: [],
+    };
+  }
+
+  // 7. Clean article content
+  const cleanedElement = cleanArticleContent(article.content || '', imageMap, imageAltMap);
+
+  // 8. Convert to Markdown
+  const markdown = convertToMarkdown(cleanedElement.innerHTML, imageMap, imageAltMap, embedDataMap);
+
   // Fetch and resize regular images
   const regularImages = await extractImages(imageMap, config);
 
   // Combine regular images and embed images
-  const embedImages: ImagePayload[] = capturedEmbeds.map((embed) => ({
+  const embedImages: ImagePayload[] = Array.from(embedDataMap.values()).map((embed) => ({
     filename: embed.filename,
     data: embed.data,
     originalUrl: '', // Embeds don't have a source URL for the image itself
