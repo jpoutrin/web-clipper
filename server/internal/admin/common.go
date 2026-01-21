@@ -45,8 +45,14 @@ func (l *CLILogger) Error(msg string, args ...interface{}) {
 
 // buildServices creates the service instances for user CLI commands.
 func buildServices() (services.UserService, error) {
+	// Find config file (searches production and development paths)
+	configPath, err := config.FindConfigPath()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find config: %w", err)
+	}
+
 	// Load config
-	cfg, err := config.Load("config/clipper.yaml")
+	cfg, err := config.Load(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
