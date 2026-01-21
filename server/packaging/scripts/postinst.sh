@@ -21,6 +21,25 @@ mkdir -p /var/log/web-clipper
 chown -R web-clipper:web-clipper /var/lib/web-clipper
 chown -R web-clipper:web-clipper /var/log/web-clipper
 
+# Initialize database if it doesn't exist or is empty
+DB_PATH="/var/lib/web-clipper/data/clipper.sqlite3"
+SCHEMA_SQL="/usr/share/web-clipper/migrations/schema.sql"
+
+if [ ! -f "$DB_PATH" ] || [ ! -s "$DB_PATH" ]; then
+    echo "Initializing database..."
+    if [ -f "$SCHEMA_SQL" ]; then
+        sqlite3 "$DB_PATH" < "$SCHEMA_SQL"
+        chown web-clipper:web-clipper "$DB_PATH"
+        chmod 644 "$DB_PATH"
+        echo "Database initialized successfully"
+    else
+        echo "WARNING: schema.sql not found at $SCHEMA_SQL"
+        echo "Database will need to be initialized manually"
+    fi
+else
+    echo "Database already exists, skipping initialization"
+fi
+
 # Set permissions on config files
 chown root:web-clipper /etc/web-clipper/web-clipper.env
 chmod 640 /etc/web-clipper/web-clipper.env
@@ -45,6 +64,8 @@ echo "============================================"
 echo "  Web Clipper installed successfully!"
 echo "============================================"
 echo ""
+echo "Database: Initialized at /var/lib/web-clipper/data/clipper.sqlite3"
+echo ""
 echo "Next steps:"
 echo ""
 echo "1. Configure the server:"
@@ -62,6 +83,10 @@ echo ""
 echo "3. Check status:"
 echo "   sudo systemctl status web-clipper"
 echo "   sudo journalctl -u web-clipper -f"
+echo ""
+echo "Manual migration (if needed):"
+echo "   sudo -u web-clipper MIGRATION_DIR=/usr/share/web-clipper/migrations /usr/bin/web-clipper --migrate"
+echo "   sudo -u web-clipper MIGRATION_DIR=/usr/share/web-clipper/migrations /usr/bin/web-clipper --migrate-status"
 echo ""
 echo "Data locations:"
 echo "   Config:   /etc/web-clipper/"
