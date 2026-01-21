@@ -75,12 +75,10 @@ func showMigrationStatus() {
 		log.Fatalf("Failed to create migrator: %v", err)
 	}
 
-	status, err := mig.Status()
-	if err != nil {
+	if err := mig.Status(os.Stdout); err != nil {
 		log.Fatalf("Failed to get migration status: %v", err)
 	}
 
-	fmt.Println(status)
 	os.Exit(0)
 }
 
