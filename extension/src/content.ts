@@ -144,7 +144,7 @@ function cancelSelectionMode(): { cancelled: boolean } {
 /**
  * Capture article using Readability with embedded content capture
  */
-async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
+export async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
   // 1. Find the article element FIRST to scope embed detection
   // Common article selectors used by news sites
   const articleSelectors = [
@@ -546,7 +546,7 @@ async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
 /**
  * Extract and process images
  */
-async function extractImages(
+export async function extractImages(
   imageMap: Map<string, string>,
   config: CaptureConfig
 ): Promise<ImagePayload[]> {
@@ -713,7 +713,7 @@ async function processImageData(
 /**
  * Get file extension from URL
  */
-function getImageExtension(url: string): string {
+export function getImageExtension(url: string): string {
   try {
     const pathname = new URL(url).pathname;
     const ext = pathname.split('.').pop()?.toLowerCase();
