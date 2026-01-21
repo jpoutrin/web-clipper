@@ -214,10 +214,96 @@ async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
     }
   });
 
-  // 5. Clone document for Readability (it modifies the DOM)
+  // 5. Extract images from ORIGINAL document BEFORE Readability processing
+  // This ensures we get the correct original URLs before they're modified
+  const imageMap = new Map<string, string>(); // originalUrl -> localFilename
+  const imageAltMap = new Map<string, string>(); // alt text -> filename (fallback matching)
+  let imageIndex = 0;
+
+  // Extract from the found article element, or fallback to entire document
+  const imageSource = articleElement || document.body;
+  const imgElements = imageSource.querySelectorAll('img');
+
+  console.log(`[WebClipper] Extracting images from ${articleElement ? 'article element' : 'document body'}: found ${imgElements.length} img tags`);
+
+  imgElements.forEach((img) => {
+    // Try multiple sources: src, data-src, data-lazy-src, srcset
+    let src = img.getAttribute('src');
+
+    // Check for lazy-loading attributes
+    if (!src || src.startsWith('data:') || src.includes('placeholder') || src.includes('data:image')) {
+      src = img.getAttribute('data-src') ||
+            img.getAttribute('data-lazy-src') ||
+            img.getAttribute('data-original') ||
+            null;
+    }
+
+    // Try srcset as fallback (get first/best image)
+    if (!src) {
+      const srcset = img.getAttribute('srcset') || img.getAttribute('data-srcset');
+      if (srcset) {
+        // Parse srcset and get the first URL
+        const firstSrc = srcset.split(',')[0]?.trim().split(' ')[0];
+        if (firstSrc) src = firstSrc;
+      }
+    }
+
+    if (src && !src.startsWith('data:')) {
+      // Resolve relative URLs to absolute
+      try {
+        const absoluteUrl = new URL(src, window.location.href).href;
+        console.log(`[WebClipper] Found image: ${src} → ${absoluteUrl}`);
+
+        // Skip if already in map (duplicate)
+        if (imageMap.has(absoluteUrl)) return;
+
+        const ext = getImageExtension(absoluteUrl);
+        const filename = `image${++imageIndex}${ext}`;
+        imageMap.set(absoluteUrl, filename);
+
+        // Also store by alt text for fallback matching
+        const alt = img.getAttribute('alt');
+        if (alt && alt.length > 10) {
+          imageAltMap.set(alt, filename);
+        }
+      } catch {
+        // Invalid URL, skip
+        console.warn(`[WebClipper] Invalid image URL: ${src}`);
+        return;
+      }
+    }
+  });
+
+  // Also check for picture elements with source tags
+  const pictureElements = imageSource.querySelectorAll('picture');
+  pictureElements.forEach((picture) => {
+    const sources = picture.querySelectorAll('source');
+    sources.forEach((source) => {
+      const srcset = source.getAttribute('srcset');
+      if (srcset) {
+        const firstSrc = srcset.split(',')[0]?.trim().split(' ')[0];
+        if (firstSrc && !firstSrc.startsWith('data:')) {
+          try {
+            const absoluteSrc = new URL(firstSrc, window.location.href).href;
+            if (!imageMap.has(absoluteSrc)) {
+              const ext = getImageExtension(absoluteSrc);
+              const filename = `image${++imageIndex}${ext}`;
+              imageMap.set(absoluteSrc, filename);
+            }
+          } catch {
+            // Invalid URL, skip
+          }
+        }
+      }
+    });
+  });
+
+  console.log(`[WebClipper] Found ${imageMap.size} unique images to extract`);
+
+  // 6. Clone document for Readability (it modifies the DOM)
   const documentClone = document.cloneNode(true) as Document;
 
-  // 6. Restore original DOM by removing placeholders
+  // 7. Restore original DOM by removing placeholders
   embedPlaceholders.forEach(({ placeholder, parent }) => {
     if (parent && placeholder.parentElement === parent) {
       parent.removeChild(placeholder);
@@ -330,132 +416,47 @@ async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
     }
   });
 
-  // Extract images ONLY from the original article element (not Readability output)
-  // This ensures we only capture images actually within the <article> tag
-  const imageMap = new Map<string, string>(); // originalUrl -> localFilename
-  const imageAltMap = new Map<string, string>(); // alt text -> filename (fallback matching)
-  let imageIndex = 0;
-
-  // Use the found article element as the source for images, fall back to Readability output
-  const imageSource = articleElement || tempDiv;
-  const imgElements = imageSource.querySelectorAll('img');
-
-  console.log(`[WebClipper] Extracting images from ${articleElement ? 'article element' : 'Readability output'}: found ${imgElements.length} img tags`);
-
-  imgElements.forEach((img) => {
-    // Try multiple sources: src, data-src, data-lazy-src, srcset
-    let src = img.getAttribute('src');
-
-    // Check for lazy-loading attributes
-    if (!src || src.startsWith('data:') || src.includes('placeholder') || src.includes('data:image')) {
-      src = img.getAttribute('data-src') ||
-            img.getAttribute('data-lazy-src') ||
-            img.getAttribute('data-original') ||
-            null;
-    }
-
-    // Try srcset as fallback (get first/best image)
-    if (!src) {
-      const srcset = img.getAttribute('srcset') || img.getAttribute('data-srcset');
-      if (srcset) {
-        // Parse srcset and get the first URL
-        const firstSrc = srcset.split(',')[0]?.trim().split(' ')[0];
-        if (firstSrc) src = firstSrc;
-      }
-    }
-
-    if (src && !src.startsWith('data:')) {
-      // Resolve relative URLs
-      try {
-        src = new URL(src, window.location.href).href;
-      } catch {
-        // Invalid URL, skip
-        return;
-      }
-
-      // Skip if already in map (duplicate)
-      if (imageMap.has(src)) return;
-
-      const ext = getImageExtension(src);
-      const filename = `image${++imageIndex}${ext}`;
-      imageMap.set(src, filename);
-
-      // Also store by alt text for fallback matching
-      const alt = img.getAttribute('alt');
-      if (alt && alt.length > 10) {
-        imageAltMap.set(alt, filename);
-      }
-    }
-  });
-
-  // Also check for picture elements with source tags within article
-  const pictureElements = imageSource.querySelectorAll('picture');
-  pictureElements.forEach((picture) => {
-    const sources = picture.querySelectorAll('source');
-    sources.forEach((source) => {
-      const srcset = source.getAttribute('srcset');
-      if (srcset) {
-        const firstSrc = srcset.split(',')[0]?.trim().split(' ')[0];
-        if (firstSrc && !firstSrc.startsWith('data:') && !imageMap.has(firstSrc)) {
-          try {
-            const absoluteSrc = new URL(firstSrc, window.location.href).href;
-            if (!imageMap.has(absoluteSrc)) {
-              const ext = getImageExtension(absoluteSrc);
-              const filename = `image${++imageIndex}${ext}`;
-              imageMap.set(absoluteSrc, filename);
-            }
-          } catch {
-            // Invalid URL, skip
-          }
-        }
-      }
-    });
-  });
-
-  console.log(`[WebClipper] Found ${imageMap.size} unique images to extract`);
-
-  // Now update image references in the Readability output for markdown conversion
+  // Remove images we couldn't map and clean up lazy-loading attributes
+  // Do NOT update src to avoid browser fetching placeholder URLs
   tempDiv.querySelectorAll('img').forEach((img) => {
     let src = img.getAttribute('src') ||
               img.getAttribute('data-src') ||
               img.getAttribute('data-lazy-src');
 
-    let filename: string | undefined;
+    let found = false;
 
-    // Try to match by src URL first
+    // Check if we have this image in our map
     if (src) {
       try {
-        src = new URL(src, window.location.href).href;
-        filename = imageMap.get(src);
+        const absoluteSrc = new URL(src, window.location.href).href;
+        found = imageMap.has(absoluteSrc);
       } catch {
         // Invalid URL
       }
     }
 
-    // Fallback: try to match by alt text if src lookup failed
-    if (!filename) {
+    // Fallback: check by alt text
+    if (!found) {
       const alt = img.getAttribute('alt');
       if (alt && alt.length > 10) {
-        filename = imageAltMap.get(alt);
+        found = imageAltMap.has(alt);
       }
     }
 
-    // Update image src if we found a match
-    if (filename) {
-      img.setAttribute('src', `media/${filename}`);
-    } else {
+    if (!found) {
       // Remove images we couldn't map (likely external/ad images)
       const parent = img.parentElement;
       if (parent) {
         parent.removeChild(img);
       }
+    } else {
+      // Clean up lazy-loading attributes but DON'T modify src
+      // Turndown rule will handle the mapping
+      img.removeAttribute('data-src');
+      img.removeAttribute('data-lazy-src');
+      img.removeAttribute('srcset');
+      img.removeAttribute('data-srcset');
     }
-
-    // Remove lazy-loading attributes
-    img.removeAttribute('data-src');
-    img.removeAttribute('data-lazy-src');
-    img.removeAttribute('srcset');
-    img.removeAttribute('data-srcset');
   });
 
   // Convert HTML to Markdown
@@ -468,14 +469,38 @@ async function captureArticle(config: CaptureConfig): Promise<CaptureResult> {
   // Add embed replacement rules BEFORE images rule
   addEmbedRules(turndownService, embedDataMap);
 
-  // Custom rule for images to use local paths
+  // Custom rule for images to map to local media paths
   turndownService.addRule('images', {
     filter: 'img',
     replacement: (_content, node) => {
       const img = node as HTMLImageElement;
       const alt = img.alt || '';
-      const src = img.getAttribute('src') || '';
-      return `![${alt}](${src})`;
+      let src = img.getAttribute('src') || '';
+
+      let filename: string | undefined;
+
+      // Try to match by src URL
+      if (src) {
+        try {
+          const absoluteSrc = new URL(src, window.location.href).href;
+          filename = imageMap.get(absoluteSrc);
+        } catch {
+          // Invalid URL
+        }
+      }
+
+      // Fallback: try to match by alt text
+      if (!filename && alt && alt.length > 10) {
+        filename = imageAltMap.get(alt);
+      }
+
+      // If we found a mapping, use local media path
+      if (filename) {
+        return `![${alt}](media/${filename})`;
+      }
+
+      // Image not in our map, skip it
+      return '';
     },
   });
 
