@@ -38,6 +38,10 @@ async function handleMessage(message: Message): Promise<unknown> {
   };
 
   switch (message.type) {
+    case 'PING':
+      // Health check to verify content script is loaded
+      return { ready: true };
+
     case 'CAPTURE_PAGE':
       return captureArticle(config);
 

@@ -35,6 +35,9 @@ chrome.runtime.onInstalled.addListener(async () => {
   const stored = await chrome.storage.local.get(['authState', 'serverConfig']);
   if (stored.authState) authState = stored.authState as AuthState;
   if (stored.serverConfig) serverConfig = stored.serverConfig as ServerConfig;
+
+  // Enable side panel to open when action icon is clicked
+  await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
 // Restore state on startup
@@ -42,6 +45,9 @@ chrome.runtime.onStartup.addListener(async () => {
   const stored = await chrome.storage.local.get(['authState', 'serverConfig']);
   if (stored.authState) authState = stored.authState as AuthState;
   if (stored.serverConfig) serverConfig = stored.serverConfig as ServerConfig;
+
+  // Enable side panel to open when action icon is clicked
+  await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
 // Message handling

@@ -57,6 +57,7 @@ export interface ExtensionState {
 
 // Message types for communication between components
 export type MessageType =
+  | 'PING'
   | 'GET_STATE'
   | 'LOGIN'
   | 'LOGOUT'

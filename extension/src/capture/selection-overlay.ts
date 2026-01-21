@@ -35,12 +35,28 @@ export class SelectionOverlay {
     // Create shadow host
     this.shadowHost = document.createElement('div');
     this.shadowHost.id = 'web-clipper-selection-host';
+
+    // Use absolute positioning for document-relative coordinates
+    // Get full document dimensions
+    const docHeight = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight
+    );
+    const docWidth = Math.max(
+      document.body.scrollWidth,
+      document.documentElement.scrollWidth,
+      document.body.offsetWidth,
+      document.documentElement.offsetWidth
+    );
+
     this.shadowHost.style.cssText = `
-      position: fixed !important;
+      position: absolute !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
+      width: ${docWidth}px !important;
+      height: ${docHeight}px !important;
       z-index: 2147483647 !important;
       pointer-events: none !important;
     `;
@@ -80,7 +96,7 @@ export class SelectionOverlay {
         }
 
         .wc-highlight-box {
-          position: fixed;
+          position: absolute;
           border: 2px dashed #3b82f6;
           background: rgba(59, 130, 246, 0.1);
           pointer-events: none;
@@ -356,10 +372,10 @@ export class SelectionOverlay {
     // Ignore tiny elements
     if (target.offsetWidth < 20 || target.offsetHeight < 20) return;
 
-    // Update highlight position
+    // Update highlight position (document coordinates for absolute positioning)
     const rect = target.getBoundingClientRect();
-    this.highlightBox.style.top = `${rect.top}px`;
-    this.highlightBox.style.left = `${rect.left}px`;
+    this.highlightBox.style.top = `${rect.top + window.scrollY}px`;
+    this.highlightBox.style.left = `${rect.left + window.scrollX}px`;
     this.highlightBox.style.width = `${rect.width}px`;
     this.highlightBox.style.height = `${rect.height}px`;
     this.highlightBox.classList.add('visible');

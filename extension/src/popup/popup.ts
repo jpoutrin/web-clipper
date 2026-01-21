@@ -12,7 +12,7 @@ const clipTagsInput = document.getElementById('clip-tags') as HTMLInputElement;
 const clipNotesInput = document.getElementById('clip-notes') as HTMLTextAreaElement;
 const clipBtn = document.getElementById('clip-btn') as HTMLButtonElement;
 const messageDiv = document.getElementById('message')!;
-const modeBtns = document.querySelectorAll('.mode-btn') as NodeListOf<HTMLButtonElement>;
+const modeBtns = document.querySelectorAll('.mode-item') as NodeListOf<HTMLButtonElement>;
 
 // State
 let authState: AuthState | null = null;
@@ -70,11 +70,11 @@ function setupModeSelector() {
       let nextIndex = currentIndex;
 
       switch (e.key) {
-        case 'ArrowLeft':
+        case 'ArrowUp':
           e.preventDefault();
           nextIndex = currentIndex > 0 ? currentIndex - 1 : btnsArray.length - 1;
           break;
-        case 'ArrowRight':
+        case 'ArrowDown':
           e.preventDefault();
           nextIndex = currentIndex < btnsArray.length - 1 ? currentIndex + 1 : 0;
           break;
@@ -82,6 +82,7 @@ function setupModeSelector() {
         case '2':
         case '3':
         case '4':
+        case '5':
           e.preventDefault();
           nextIndex = parseInt(e.key) - 1;
           break;
@@ -210,6 +211,41 @@ logoutBtn.addEventListener('click', async () => {
   showMessage('Logged out', 'info');
 });
 
+/**
+ * Ensure content script is loaded and ready.
+ * If not, attempt to inject it programmatically.
+ * Returns null on success, or an error message on failure.
+ */
+async function ensureContentScript(tabId: number): Promise<string | null> {
+  try {
+    // Try to ping the content script
+    await chrome.tabs.sendMessage(tabId, { type: 'PING' });
+    return null; // Success - content script is ready
+  } catch (err) {
+    // Content script not loaded - try to inject it
+    console.log('Content script not responding, attempting injection...');
+
+    try {
+      // Inject the content script programmatically
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['content.js'],
+      });
+
+      // Wait a bit for the script to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Verify it's now working
+      await chrome.tabs.sendMessage(tabId, { type: 'PING' });
+      return null; // Success
+    } catch (injectErr) {
+      // Injection failed - likely a protected page
+      console.error('Failed to inject content script:', injectErr);
+      return 'Please reload this page to enable clipping. (Content script could not be loaded)';
+    }
+  }
+}
+
 // Clip button handler
 clipBtn.addEventListener('click', async () => {
   setLoading(clipBtn, true);
@@ -220,6 +256,15 @@ clipBtn.addEventListener('click', async () => {
     if (!tab?.id) {
       showMessage('No active tab found', 'error');
       return;
+    }
+
+    // Ensure content script is ready for modes that need it
+    if (currentMode !== 'screenshot') {
+      const error = await ensureContentScript(tab.id);
+      if (error) {
+        showMessage(error, 'error');
+        return;
+      }
     }
 
     // Get config for image limits

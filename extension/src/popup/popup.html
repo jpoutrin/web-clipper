@@ -29,45 +29,79 @@
       </div>
 
       <!-- Mode Selector -->
-      <div class="mode-selector" role="tablist" aria-label="Capture mode selection">
-        <button class="mode-btn active" data-mode="article" role="tab" aria-selected="true" tabindex="0">
-          <span class="mode-icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <path d="M7 8h10M7 12h10M7 16h7"/>
-            </svg>
-          </span>
-          <span class="mode-label">Article</span>
-        </button>
-        <button class="mode-btn" data-mode="bookmark" role="tab" aria-selected="false" tabindex="-1">
-          <span class="mode-icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-            </svg>
-          </span>
-          <span class="mode-label">Bookmark</span>
-        </button>
-        <button class="mode-btn" data-mode="screenshot" role="tab" aria-selected="false" tabindex="-1">
-          <span class="mode-icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-          </span>
-          <span class="mode-label">Screenshot</span>
-        </button>
-        <button class="mode-btn" data-mode="selection" role="tab" aria-selected="false" tabindex="-1">
-          <span class="mode-icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-            </svg>
-          </span>
-          <span class="mode-label">Selection</span>
-        </button>
+      <div class="mode-selector">
+        <label class="mode-selector-label">Clip format</label>
+        <div class="mode-list" role="tablist" aria-label="Capture mode selection">
+          <button class="mode-item active" data-mode="article" role="tab" aria-selected="true" tabindex="0">
+            <span class="mode-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <path d="M7 8h10M7 12h10M7 16h7"/>
+              </svg>
+            </span>
+            <span class="mode-label">Article</span>
+            <span class="mode-check" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+          </button>
+          <button class="mode-item" data-mode="selection" role="tab" aria-selected="false" tabindex="-1">
+            <span class="mode-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+                <path d="M13 13l6 6"/>
+              </svg>
+            </span>
+            <span class="mode-label">Selection</span>
+            <span class="mode-check" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+          </button>
+          <button class="mode-item" data-mode="fullpage" role="tab" aria-selected="false" tabindex="-1">
+            <span class="mode-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/>
+              </svg>
+            </span>
+            <span class="mode-label">Full page</span>
+            <span class="mode-check" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+          </button>
+          <button class="mode-item" data-mode="bookmark" role="tab" aria-selected="false" tabindex="-1">
+            <span class="mode-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            <span class="mode-label">Bookmark</span>
+            <span class="mode-check" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+          </button>
+          <button class="mode-item" data-mode="screenshot" role="tab" aria-selected="false" tabindex="-1">
+            <span class="mode-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </span>
+            <span class="mode-label">Screenshot</span>
+            <span class="mode-check" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+          </button>
+        </div>
       </div>
 
       <div class="form-group">
