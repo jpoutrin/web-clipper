@@ -28,8 +28,10 @@ test:
 	$(CGO_ENV) go test $(GO_BUILD_FLAGS) ./...
 
 # Run database migrations
+# Development: Uses soda for hot reload compatibility
+# Production: Use 'web-clipper migrate' subcommand instead
 migrate:
-	$(CGO_ENV) $(SODA) migrate -c database.yml -e development
+	$(CGO_ENV) go run $(GO_BUILD_FLAGS) ./cmd/app migrate
 
 # Create a new migration
 migrate-new:
@@ -136,17 +138,23 @@ help:
 	@echo "  clean        - Remove build artifacts"
 	@echo "  deps         - Install dependencies"
 	@echo ""
-	@echo "User management:"
+	@echo "User management (Development via grift or Production via binary):"
 	@echo "  users-list        - List all users"
 	@echo "  users-show        - Show user details (EMAIL=x)"
 	@echo "  users-set-storage - Set user storage path (EMAIL=x PATH=y)"
 	@echo "  users-disable     - Disable a user (EMAIL=x)"
 	@echo "  users-enable      - Enable a user (EMAIL=x)"
 	@echo ""
-	@echo "Token management:"
+	@echo "Token management (Development via grift or Production via binary):"
 	@echo "  tokens-create     - Create service token (EMAIL=x NAME=y [EXPIRY=365d])"
 	@echo "  tokens-list       - List user's tokens (EMAIL=x)"
 	@echo "  tokens-revoke     - Revoke token (ID=x [REASON=y])"
+	@echo ""
+	@echo "Production CLI (compiled binary):"
+	@echo "  /usr/bin/web-clipper users list"
+	@echo "  /usr/bin/web-clipper tokens create --email=x --name=y"
+	@echo "  /usr/bin/web-clipper migrate"
+	@echo "  /usr/bin/web-clipper help"
 	@echo ""
 	@echo "Packaging:"
 	@echo "  package-local     - Build for current platform only (no cross-compile)"
