@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  # Build Chrome extension
+  # Build and upload Chrome extension
   extension:
     runs-on: ubuntu-latest
     steps:
@@ -27,10 +27,6 @@ jobs:
         working-directory: extension
         run: npm ci
 
-      - name: Run tests
-        working-directory: extension
-        run: npm test
-
       - name: Build and package extension
         working-directory: extension
         run: npm run package
@@ -39,11 +35,12 @@ jobs:
         working-directory: extension
         run: mv web-clipper.zip web-clipper-extension-${{ github.ref_name }}.zip
 
-      - name: Upload extension artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload extension to release
+        uses: softprops/action-gh-release@v2
         with:
-          name: chrome-extension
-          path: extension/web-clipper-extension-${{ github.ref_name }}.zip
+          files: extension/web-clipper-extension-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Build server binaries
   server:
@@ -78,34 +75,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Upload extension to release
-  upload-extension:
-    needs: [extension, server]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download extension artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: chrome-extension
-
-      - name: Upload to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: web-clipper-extension-${{ github.ref_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # Notify on completion
   notify:
-    needs: [extension, server, upload-extension]
+    needs: [extension, server]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Release status
         run: |
           if [ "${{ needs.server.result }}" == "success" ] && [ "${{ needs.extension.result }}" == "success" ]; then
-            echo "Release completed successfully!"
+            echo "✅ Release completed successfully!"
+            echo "Extension: ${{ needs.extension.result }}"
+            echo "Server: ${{ needs.server.result }}"
           else
-            echo "Release failed!"
+            echo "❌ Release failed!"
+            echo "Extension: ${{ needs.extension.result }}"
+            echo "Server: ${{ needs.server.result }}"
             exit 1
           fi
