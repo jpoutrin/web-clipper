@@ -8,6 +8,8 @@ import {
   ScreenshotResult,
   CaptureEmbedPayload,
   CaptureEmbedResponse,
+  ListClipsResponse,
+  ClipFilters,
 } from './types';
 import { compressScreenshot } from './capture/screenshot';
 
@@ -80,6 +82,9 @@ async function handleMessage(
 
     case 'SUBMIT_CLIP':
       return submitClip(message.payload as ClipPayload);
+
+    case 'LIST_CLIPS':
+      return listClips(message.payload as ClipFilters | undefined);
 
     case 'AUTH_CALLBACK':
       return handleAuthCallback(
@@ -471,6 +476,65 @@ async function fetchServerConfig(): Promise<ServerConfig | { error: string }> {
     return serverConfig!;
   } catch (err) {
     return { error: `Failed to fetch config: ${err}` };
+  }
+}
+
+// List clips from server
+async function listClips(filters?: ClipFilters): Promise<ListClipsResponse | { error: string }> {
+  if (!authState.accessToken || !authState.serverUrl) {
+    return { error: 'Not authenticated' } as { error: string };
+  }
+
+  try {
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.per_page) params.append('per_page', filters.per_page.toString());
+    if (filters?.mode) params.append('mode', filters.mode);
+    if (filters?.tag) params.append('tag', filters.tag);
+
+    const url = `${authState.serverUrl}/api/v1/clips${params.toString() ? `?${params}` : ''}`;
+    console.log('Fetching clips from:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authState.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshed = await refreshToken();
+        if (!refreshed) {
+          return { error: 'Authentication expired' };
+        }
+        return listClips(filters);
+      }
+
+      // Try to get error message from response
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const errorData = await response.json().catch(() => ({}));
+        return { error: errorData.error || `Server error: ${response.status}` };
+      }
+
+      return { error: `Server error: ${response.status} ${response.statusText}` };
+    }
+
+    // Check if response is JSON before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      const text = await response.text();
+      console.error('Expected JSON but got:', text.substring(0, 200));
+      return { error: `Server returned non-JSON response. Check server logs.` };
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error('Failed to fetch clips:', err);
+    return { error: `Failed to fetch clips: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
 

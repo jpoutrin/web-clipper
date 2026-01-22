@@ -55,6 +55,34 @@ export interface ExtensionState {
   lastClip: ClipResponse | null;
 }
 
+// Clip summary for list views (lightweight version without full content)
+export interface ClipSummary {
+  id: string;
+  title: string;
+  url: string;
+  mode: ClipMode;
+  tags: string[] | null;
+  notes?: string;
+  created_at: string; // ISO 8601 timestamp
+}
+
+// API response for list endpoint
+export interface ListClipsResponse {
+  clips: ClipSummary[];
+  page: number; // Current page (1-indexed)
+  per_page: number; // Items per page
+  total: number; // Total clips count
+  total_pages: number; // Total pages
+}
+
+// Filter parameters for list request
+export interface ClipFilters {
+  page?: number; // Page number (default: 1)
+  per_page?: number; // Items per page (default: 20, max: 100)
+  mode?: ClipMode; // Filter by mode
+  tag?: string; // Filter by tag (substring match)
+}
+
 // Message types for communication between components
 export type MessageType =
   | 'PING'
@@ -74,6 +102,7 @@ export type MessageType =
   | 'SELECTION_CANCELLED'
   | 'FETCH_IMAGE'
   | 'SUBMIT_CLIP'
+  | 'LIST_CLIPS'
   | 'AUTH_CALLBACK'
   | 'DEV_LOGIN';
 

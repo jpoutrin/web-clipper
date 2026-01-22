@@ -155,6 +155,13 @@ h1 {
   margin-bottom: 4px;
 }
 
+.form-hint {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
 .form-group input,
 .form-group textarea {
   width: 100%;
@@ -312,4 +319,24 @@ h1 {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Clips View Section */
+.clips-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.clips-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+#clips-container {
+  min-height: 200px;
 }

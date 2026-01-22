@@ -14,7 +14,8 @@
     <div id="login-section" class="section">
       <div class="form-group">
         <label for="server-url">Server URL</label>
-        <input type="url" id="server-url" placeholder="https://your-server.com" />
+        <input type="url" id="server-url" placeholder="http://localhost:3000" />
+        <small class="form-hint">No trailing slash needed</small>
       </div>
       <button id="connect-btn" class="btn btn-primary">Connect (OAuth)</button>
       <button id="dev-login-btn" class="btn btn-secondary">Dev Login</button>
@@ -120,6 +121,16 @@
       </div>
 
       <button id="clip-btn" class="btn btn-primary">Clip Article</button>
+      <button id="view-clips-btn" class="btn btn-secondary">My Clips</button>
+    </div>
+
+    <!-- Clips View Section (shown when navigating to #clips) -->
+    <div id="clips-section" class="section hidden">
+      <div class="clips-header">
+        <button id="back-btn" class="btn-link">← Back</button>
+        <h2>My Clips</h2>
+      </div>
+      <div id="clips-container"></div>
     </div>
 
     <!-- Message Display -->

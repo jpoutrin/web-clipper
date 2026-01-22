@@ -1,8 +1,10 @@
 import { AuthState, ServerConfig, ClipPayload, CaptureResult, ClipMode } from '../types';
+import { ClipsView } from './clips-view';
 
 // DOM Elements
 const loginSection = document.getElementById('login-section')!;
 const clipSection = document.getElementById('clip-section')!;
+const clipsSection = document.getElementById('clips-section')!;
 const serverUrlInput = document.getElementById('server-url') as HTMLInputElement;
 const connectBtn = document.getElementById('connect-btn') as HTMLButtonElement;
 const devLoginBtn = document.getElementById('dev-login-btn') as HTMLButtonElement;
@@ -18,6 +20,7 @@ const modeBtns = document.querySelectorAll('.mode-item') as NodeListOf<HTMLButto
 let authState: AuthState | null = null;
 let config: ServerConfig | null = null;
 let currentMode: ClipMode = 'article';
+let clipsView: ClipsView | null = null;
 
 // Mode button text mapping
 const modeButtonText: Record<ClipMode, string> = {
@@ -40,6 +43,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Setup mode selector
   setupModeSelector();
+
+  // Setup navigation
+  setupNavigation();
+
+  // Handle initial route
+  handleRoute();
 });
 
 // Setup mode selector event handlers
@@ -130,9 +139,27 @@ function updateUI() {
   hideMessage();
 }
 
+// Normalize server URL (remove trailing slashes, validate format)
+function normalizeServerUrl(url: string): string {
+  let normalized = url.trim();
+
+  // Remove trailing slashes
+  while (normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1);
+  }
+
+  // Validate URL format
+  if (normalized && !normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+    showMessage('Server URL must start with http:// or https://', 'error');
+    return '';
+  }
+
+  return normalized;
+}
+
 // Connect button handler (OAuth flow)
 connectBtn.addEventListener('click', async () => {
-  const serverUrl = serverUrlInput.value.trim();
+  const serverUrl = normalizeServerUrl(serverUrlInput.value);
   if (!serverUrl) {
     showMessage('Please enter a server URL', 'error');
     return;
@@ -166,7 +193,7 @@ connectBtn.addEventListener('click', async () => {
 
 // Dev Login button handler (direct token, no OAuth)
 devLoginBtn.addEventListener('click', async () => {
-  const serverUrl = serverUrlInput.value.trim();
+  const serverUrl = normalizeServerUrl(serverUrlInput.value);
   if (!serverUrl) {
     showMessage('Please enter a server URL', 'error');
     return;
@@ -419,3 +446,76 @@ chrome.storage.onChanged.addListener((changes) => {
     config = changes.serverConfig.newValue as ServerConfig | null;
   }
 });
+
+// Navigation and routing
+
+/**
+ * Setup navigation event listeners
+ */
+function setupNavigation() {
+  // View clips button
+  const viewClipsBtn = document.getElementById('view-clips-btn');
+  if (viewClipsBtn) {
+    viewClipsBtn.addEventListener('click', () => {
+      window.location.hash = '#clips';
+    });
+  }
+
+  // Back button
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      window.location.hash = '';
+    });
+  }
+
+  // Listen for hash changes
+  window.addEventListener('hashchange', handleRoute);
+}
+
+/**
+ * Handle route based on hash
+ */
+function handleRoute() {
+  const hash = window.location.hash;
+
+  if (hash === '#clips') {
+    showClipsView();
+  } else {
+    showMainView();
+  }
+}
+
+/**
+ * Show clips list view
+ */
+function showClipsView() {
+  // Hide main clip form
+  clipSection.classList.add('hidden');
+
+  // Show clips view
+  clipsSection.classList.remove('hidden');
+
+  // Initialize ClipsView if not already created
+  if (!clipsView) {
+    clipsView = new ClipsView('clips-container');
+    clipsView.init();
+  }
+}
+
+/**
+ * Show main clip creation view
+ */
+function showMainView() {
+  // Show main clip form
+  clipSection.classList.remove('hidden');
+
+  // Hide clips view
+  clipsSection.classList.add('hidden');
+
+  // Destroy ClipsView to free memory
+  if (clipsView) {
+    clipsView.destroy();
+    clipsView = null;
+  }
+}

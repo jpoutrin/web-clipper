@@ -1,0 +1,54 @@
+/**
+ * EmptyState Component Styles
+ */
+
+.wc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--wc-space-6);
+  min-height: 200px;
+}
+
+.wc-empty-state__icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: var(--wc-space-4);
+}
+
+.wc-empty-state__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wc-text-primary);
+  margin: 0 0 var(--wc-space-2) 0;
+}
+
+.wc-empty-state__description {
+  font-size: 14px;
+  color: var(--wc-text-secondary);
+  margin: 0 0 var(--wc-space-4) 0;
+  max-width: 280px;
+}
+
+.wc-empty-state__action {
+  padding: var(--wc-space-2) var(--wc-space-4);
+  background: var(--wc-primary-500);
+  color: white;
+  border: none;
+  border-radius: var(--wc-radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--wc-duration-normal) var(--wc-ease-out);
+}
+
+.wc-empty-state__action:hover {
+  background: var(--wc-primary-600);
+}
+
+.wc-empty-state__action:focus-visible {
+  outline: 2px solid var(--wc-primary-500);
+  outline-offset: 2px;
+}
