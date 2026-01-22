@@ -1,0 +1,114 @@
+/**
+ * ConfirmationOverlay Component Styles
+ */
+
+.wc-confirmation-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  text-align: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.wc-confirmation-overlay__icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.wc-confirmation-overlay__message {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #991b1b;
+  line-height: 1.4;
+}
+
+.wc-confirmation-overlay__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.wc-confirmation-overlay__btn {
+  flex: 1;
+  padding: 8px 16px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wc-confirmation-overlay__btn--cancel {
+  background: #ffffff;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.wc-confirmation-overlay__btn--cancel:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.wc-confirmation-overlay__btn--cancel:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.wc-confirmation-overlay__btn--danger {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+.wc-confirmation-overlay__btn--danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.wc-confirmation-overlay__btn--danger:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+.wc-confirmation-overlay__btn--primary {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.wc-confirmation-overlay__btn--primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.wc-confirmation-overlay__btn--primary:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .wc-confirmation-overlay {
+    animation: none;
+  }
+}

@@ -22,7 +22,17 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
+        oneOf: [
+          // CSS files in ui/components directories should be loaded as strings for Shadow DOM
+          {
+            include: /ui\/components/,
+            type: 'asset/source',
+          },
+          // Other CSS files use style-loader (inject into DOM)
+          {
+            use: ['style-loader', 'css-loader'],
+          },
+        ],
         exclude: /node_modules/,
       },
     ],

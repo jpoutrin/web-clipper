@@ -494,6 +494,17 @@ h1 {
   to { transform: rotate(360deg); }
 }
 
+/* Load More Button */
+.wc-btn--load-more:hover:not(:disabled) {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+.wc-btn--load-more:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Clips View Section */
 .clips-header {
   display: flex;

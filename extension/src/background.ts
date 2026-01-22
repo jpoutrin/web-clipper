@@ -10,6 +10,7 @@ import {
   CaptureEmbedResponse,
   ListClipsResponse,
   ClipFilters,
+  ClipSummary,
 } from './types';
 import { compressScreenshot } from './capture/screenshot';
 
@@ -28,6 +29,18 @@ let pendingSelection: {
   tabId: number;
   config: { maxDimensionPx: number; maxSizeBytes: number };
 } | null = null;
+
+// Pending delete interface
+interface PendingDelete {
+  clipId: string;
+  clip: ClipSummary;
+  index: number;
+  timer: ReturnType<typeof setTimeout>;
+  initiatedAt: number;
+}
+
+// Pending deletes state (for undo functionality)
+const pendingDeletes = new Map<string, PendingDelete>();
 
 // Capture lock to prevent concurrent captures
 let captureInProgress = false;
@@ -85,6 +98,24 @@ async function handleMessage(
 
     case 'LIST_CLIPS':
       return listClips(message.payload as ClipFilters | undefined);
+
+    case 'DELETE_CLIP':
+      return deleteClip((message.payload as { id: string }).id);
+
+    case 'SCHEDULE_DELETE':
+      return scheduleDelete(message.payload as { clipId: string; clip: ClipSummary; index: number; delayMs: number });
+
+    case 'CANCEL_DELETE':
+      return cancelDelete((message.payload as { clipId: string }).clipId);
+
+    case 'EXECUTE_DELETE_NOW':
+      return executeDeleteNow((message.payload as { clipId: string }).clipId);
+
+    case 'GET_PENDING_DELETES':
+      return {
+        success: true,
+        clipIds: Array.from(pendingDeletes.keys()),
+      };
 
     case 'AUTH_CALLBACK':
       return handleAuthCallback(
@@ -573,6 +604,113 @@ async function submitClip(payload: ClipPayload): Promise<ClipResponse> {
   } catch (err) {
     return { success: false, error: `Failed to submit clip: ${err}` };
   }
+}
+
+// Delete clip from server
+async function deleteClip(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!authState.accessToken || !authState.serverUrl) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  try {
+    const response = await fetch(`${authState.serverUrl}/api/v1/clips/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${authState.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshed = await refreshToken();
+        if (!refreshed) {
+          return { success: false, error: 'Authentication expired' };
+        }
+        return deleteClip(id);
+      }
+      if (response.status === 404) {
+        return { success: false, error: 'Clip not found' };
+      }
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData.error || `Server error: ${response.status}`,
+      };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: `Failed to delete clip: ${err}` };
+  }
+}
+
+/**
+ * Schedule a clip deletion after a delay
+ */
+async function scheduleDelete(payload: {
+  clipId: string;
+  clip: ClipSummary;
+  index: number;
+  delayMs: number;
+}): Promise<{ success: boolean }> {
+  const { clipId, clip, index, delayMs } = payload;
+
+  // Cancel existing timer if any
+  const existing = pendingDeletes.get(clipId);
+  if (existing) {
+    clearTimeout(existing.timer);
+  }
+
+  // Schedule new delete
+  const timer = setTimeout(async () => {
+    await deleteClip(clipId);
+    pendingDeletes.delete(clipId);
+  }, delayMs);
+
+  pendingDeletes.set(clipId, {
+    clipId,
+    clip,
+    index,
+    timer,
+    initiatedAt: Date.now(),
+  });
+
+  return { success: true };
+}
+
+/**
+ * Cancel a scheduled delete and return clip data for restoration
+ */
+function cancelDelete(clipId: string): {
+  success: boolean;
+  clip?: ClipSummary;
+  index?: number;
+} {
+  const pending = pendingDeletes.get(clipId);
+  if (pending) {
+    clearTimeout(pending.timer);
+    pendingDeletes.delete(clipId);
+    return {
+      success: true,
+      clip: pending.clip,
+      index: pending.index,
+    };
+  }
+  return { success: false };
+}
+
+/**
+ * Execute delete immediately (skip remaining delay)
+ */
+async function executeDeleteNow(clipId: string): Promise<{ success: boolean; error?: string }> {
+  const pending = pendingDeletes.get(clipId);
+  if (pending) {
+    clearTimeout(pending.timer);
+    pendingDeletes.delete(clipId);
+  }
+
+  // Execute delete
+  return await deleteClip(clipId);
 }
 
 // Refresh access token

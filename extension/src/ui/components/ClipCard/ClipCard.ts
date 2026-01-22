@@ -55,9 +55,15 @@ export class ClipCard {
     const relativeTime = formatRelativeTime(clip.created_at);
     const modeIcon = getModeIcon(clip.mode);
     const modeColorClass = getModeColorClass(clip.mode);
+    const accentColor = this.getModeAccentColor(clip.mode);
 
     const cardHTML = `
-      <div class="wc-clip-card" tabindex="0" role="article" aria-label="Clip: ${escapeHtml(clip.title)}">
+      <div class="wc-clip-card" tabindex="0" role="article" aria-label="Clip: ${escapeHtml(clip.title)}" style="--wc-accent-color: ${accentColor}">
+        <div class="wc-clip-card__actions">
+          <button class="wc-clip-card__action-btn" data-action="menu" aria-label="More actions" aria-haspopup="menu" title="More actions">
+            ⋮
+          </button>
+        </div>
         <div class="wc-clip-card__header">
           <span class="wc-clip-card__mode-icon" aria-hidden="true">${modeIcon}</span>
           <span class="wc-clip-card__mode-badge ${modeColorClass}">${escapeHtml(clip.mode)}</span>
@@ -77,6 +83,20 @@ export class ClipCard {
       <style>${getCombinedStyles(clipCardStyles)}</style>
       ${cardHTML}
     `;
+  }
+
+  /**
+   * Get accent color for mode
+   */
+  private getModeAccentColor(mode: string): string {
+    const colors: Record<string, string> = {
+      article: '#3b82f6',
+      bookmark: '#f59e0b',
+      screenshot: '#10b981',
+      selection: '#8b5cf6',
+      fullpage: '#6b7280',
+    };
+    return colors[mode] || '#3b82f6';
   }
 
   /**
@@ -100,8 +120,14 @@ export class ClipCard {
     const card = this.shadowRoot.querySelector('.wc-clip-card');
     if (!card) return;
 
-    // Click handler
-    card.addEventListener('click', () => {
+    // Click handler - view clip
+    card.addEventListener('click', (e: Event) => {
+      // Ignore clicks on action buttons
+      const target = e.target as HTMLElement;
+      if (target.closest('.wc-clip-card__actions')) {
+        return;
+      }
+
       if (this.props.onClick) {
         this.props.onClick(this.props.clip.id);
       }
@@ -110,10 +136,50 @@ export class ClipCard {
         new CustomEvent('wc-clip-click', {
           bubbles: true,
           composed: true,
-          detail: { id: this.props.clip.id },
+          detail: { id: this.props.clip.id, action: 'view' },
         })
       );
     });
+
+    // Menu button handler
+    const menuBtn = this.shadowRoot.querySelector('[data-action="menu"]');
+    if (menuBtn) {
+      menuBtn.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+
+        // Get button's position for menu positioning
+        const buttonRect = (menuBtn as HTMLElement).getBoundingClientRect();
+
+        console.log('[ClipCard] Menu button clicked, buttonRect:', {
+          top: buttonRect.top,
+          right: buttonRect.right,
+          bottom: buttonRect.bottom,
+          left: buttonRect.left,
+          width: buttonRect.width,
+          height: buttonRect.height
+        });
+
+        this.container.dispatchEvent(
+          new CustomEvent('wc-clip-action', {
+            bubbles: true,
+            composed: true,
+            detail: {
+              id: this.props.clip.id,
+              action: 'menu',
+              anchorElement: menuBtn,
+              buttonRect: {
+                top: buttonRect.top,
+                right: buttonRect.right,
+                bottom: buttonRect.bottom,
+                left: buttonRect.left,
+                width: buttonRect.width,
+                height: buttonRect.height
+              }
+            },
+          })
+        );
+      });
+    }
 
     // Keyboard handler
     card.addEventListener('keydown', (e: Event) => {

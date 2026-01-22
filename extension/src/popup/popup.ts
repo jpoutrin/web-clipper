@@ -49,6 +49,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Handle initial route
   handleRoute();
+
+  // Make undoClipDelete globally accessible for UndoToast callbacks
+  (window as any).undoClipDelete = undoClipDelete;
+
+  // Execute pending deletes when drawer closes (not on navigation)
+  window.addEventListener('pagehide', executePendingDeletesOnClose);
+  window.addEventListener('beforeunload', executePendingDeletesOnClose);
 });
 
 // Setup mode selector event handlers
@@ -535,5 +542,53 @@ function showMainView() {
   if (clipsView) {
     clipsView.destroy();
     clipsView = null;
+  }
+}
+
+/**
+ * Undo clip deletion (global function, works even if ClipsView destroyed)
+ */
+async function undoClipDelete(clipId: string): Promise<void> {
+  // Cancel background delete and get clip data
+  const response = await chrome.runtime.sendMessage({
+    type: 'CANCEL_DELETE',
+    payload: { clipId },
+  });
+
+  if (!response.success || !response.clip) {
+    console.warn('Could not undo delete - clip data not found');
+    return;
+  }
+
+  // Navigate to clips view if not already there
+  if (window.location.hash !== '#clips') {
+    window.location.hash = '#clips';
+    // Wait for view to render
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  // Restore clip to ClipsView
+  if (clipsView) {
+    clipsView.restoreClip(response.clip, response.index);
+  }
+}
+
+/**
+ * Execute pending deletes when popup closes (drawer closes, not navigation)
+ */
+async function executePendingDeletesOnClose() {
+  // Get all pending delete IDs from background
+  const response = await chrome.runtime.sendMessage({
+    type: 'GET_PENDING_DELETES',
+  });
+
+  if (response.success && response.clipIds) {
+    // Execute all pending deletes immediately
+    for (const clipId of response.clipIds) {
+      await chrome.runtime.sendMessage({
+        type: 'EXECUTE_DELETE_NOW',
+        payload: { clipId },
+      });
+    }
   }
 }

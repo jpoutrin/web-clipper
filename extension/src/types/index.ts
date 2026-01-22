@@ -103,6 +103,11 @@ export type MessageType =
   | 'FETCH_IMAGE'
   | 'SUBMIT_CLIP'
   | 'LIST_CLIPS'
+  | 'DELETE_CLIP'
+  | 'SCHEDULE_DELETE'
+  | 'CANCEL_DELETE'
+  | 'EXECUTE_DELETE_NOW'
+  | 'GET_PENDING_DELETES'
   | 'AUTH_CALLBACK'
   | 'DEV_LOGIN';
 

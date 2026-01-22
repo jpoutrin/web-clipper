@@ -8,6 +8,9 @@ import { ClipSummary, ListClipsResponse, ClipFilters } from '../types';
 import { createClipCard } from '../ui/components/ClipCard';
 import { createEmptyState } from '../ui/components/EmptyState';
 import { createSpinner } from '../ui/components/Spinner';
+import { createContextMenu } from '../ui/components/ContextMenu';
+import { showUndoToast } from '../ui/components/UndoToast';
+import { createConfirmationOverlay } from '../ui/components/ConfirmationOverlay';
 
 /**
  * ClipsView state interface
@@ -103,8 +106,13 @@ export class ClipsView {
         tags: clip.tags || [],
       }));
 
+      // Append to existing clips if loading more, otherwise replace
+      const updatedClips = this.state.page > 1
+        ? [...this.state.clips, ...normalizedClips]
+        : normalizedClips;
+
       this.setState({
-        clips: normalizedClips,
+        clips: updatedClips,
         totalPages: data.total_pages || 1,
         loading: false,
       });
@@ -211,26 +219,134 @@ export class ClipsView {
 
     // Create clips list container
     const clipsList = document.createElement('div');
-    clipsList.style.cssText = 'display: flex; flex-direction: column; gap: 12px;';
+    clipsList.style.cssText = 'display: flex; flex-direction: column; gap: 16px; padding-bottom: 16px;';
 
     this.state.clips.forEach(clip => {
       const card = createClipCard({
         clip,
         onClick: (id) => this.handleClipClick(id),
       });
-      clipsList.appendChild(card);
-      this.clipCards.set(clip.id, card);
+
+      // Listen for action events (view, menu)
+      card.addEventListener('wc-clip-action', ((e: CustomEvent) => {
+        const { id, action, anchorElement, buttonRect } = e.detail;
+        if (action === 'view') {
+          this.handleClipClick(id);
+        } else if (action === 'menu') {
+          this.showContextMenu(id, anchorElement, buttonRect);
+        }
+      }) as EventListener);
+
+      // Wrap card in a positioned container for overlay support
+      const cardWrapper = document.createElement('div');
+      cardWrapper.style.position = 'relative';
+      cardWrapper.setAttribute('data-clip-id', clip.id);
+      cardWrapper.appendChild(card);
+
+      clipsList.appendChild(cardWrapper);
+      this.clipCards.set(clip.id, cardWrapper);
     });
 
     this.container.appendChild(clipsList);
 
-    // Add pagination info if multiple pages
+    // Add pagination controls
     if (this.state.totalPages > 1) {
-      const paginationInfo = document.createElement('div');
-      paginationInfo.style.cssText = 'text-align: center; padding: 16px; font-size: 13px; color: #6b7280;';
-      paginationInfo.textContent = `Page ${this.state.page} of ${this.state.totalPages}`;
-      this.container.appendChild(paginationInfo);
+      this.renderPagination();
     }
+  }
+
+  /**
+   * Render pagination controls
+   */
+  private renderPagination(): void {
+    const hasMorePages = this.state.page < this.state.totalPages;
+    const totalClips = this.state.totalPages * 20; // Assuming 20 per page
+    const loadedClips = this.state.clips.length;
+
+    if (hasMorePages) {
+      // Load More button
+      const loadMoreContainer = document.createElement('div');
+      loadMoreContainer.style.cssText = 'padding: 16px 0;';
+
+      const loadMoreBtn = document.createElement('button');
+      loadMoreBtn.className = 'btn wc-btn--ghost wc-btn--load-more';
+      loadMoreBtn.style.cssText = `
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.15s;
+      `;
+
+      if (this.state.loading) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.innerHTML = `
+          <span style="display: flex; align-items: center; gap: 8px;">
+            <span class="loading-spinner" style="
+              width: 14px;
+              height: 14px;
+              border: 2px solid rgba(0, 0, 0, 0.1);
+              border-top-color: #6b7280;
+              border-radius: 50%;
+              animation: spin 0.8s linear infinite;
+            "></span>
+            Loading...
+          </span>
+        `;
+      } else {
+        loadMoreBtn.innerHTML = `
+          <span style="font-weight: 500; color: #374151;">Load 20 more clips ↓</span>
+          <span style="font-size: 12px; color: #9ca3af;">(${loadedClips} of ${totalClips})</span>
+        `;
+        loadMoreBtn.addEventListener('click', () => this.loadMoreClips());
+        loadMoreBtn.addEventListener('mouseenter', () => {
+          loadMoreBtn.style.background = '#f9fafb';
+          loadMoreBtn.style.borderColor = '#d1d5db';
+        });
+        loadMoreBtn.addEventListener('mouseleave', () => {
+          loadMoreBtn.style.background = 'transparent';
+          loadMoreBtn.style.borderColor = '#e5e7eb';
+        });
+      }
+
+      loadMoreContainer.appendChild(loadMoreBtn);
+      this.container.appendChild(loadMoreContainer);
+    } else {
+      // All clips loaded
+      const endMessage = document.createElement('div');
+      endMessage.style.cssText = `
+        text-align: center;
+        padding: 24px 16px;
+        color: #9ca3af;
+        font-size: 13px;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 8px;
+      `;
+      endMessage.textContent = '───── All clips loaded ─────';
+      this.container.appendChild(endMessage);
+    }
+  }
+
+  /**
+   * Load more clips (next page)
+   */
+  async loadMoreClips(): Promise<void> {
+    if (this.state.page >= this.state.totalPages || this.state.loading) {
+      return;
+    }
+
+    // Increment page
+    this.setState({ page: this.state.page + 1 });
+
+    // Load clips (will append to existing list)
+    await this.loadClips();
   }
 
   /**
@@ -243,9 +359,137 @@ export class ClipsView {
   }
 
   /**
-   * Destroy the clips view
+   * Show context menu for clip
+   */
+  private showContextMenu(clipId: string, anchorElement: Element, buttonRect?: DOMRect): void {
+    const clip = this.state.clips.find(c => c.id === clipId);
+    if (!clip) return;
+
+    createContextMenu({
+      anchorElement,
+      buttonRect,
+      items: [
+        {
+          label: 'View details',
+          icon: '→',
+          onClick: () => this.handleClipClick(clipId),
+        },
+        {
+          label: 'Open original',
+          icon: '↗',
+          onClick: () => this.openOriginalUrl(clip.url),
+        },
+        {
+          label: 'Delete',
+          icon: '🗑️',
+          danger: true,
+          onClick: () => this.showDeleteConfirmation(clipId),
+        },
+      ],
+    });
+  }
+
+  /**
+   * Show delete confirmation overlay on the card
+   */
+  private showDeleteConfirmation(clipId: string): void {
+    const cardWrapper = this.clipCards.get(clipId);
+    if (!cardWrapper) return;
+
+    // Create confirmation overlay
+    const overlay = createConfirmationOverlay({
+      message: 'Delete this clip?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      danger: true,
+      onConfirm: () => {
+        // Remove overlay
+        overlay.remove();
+        this.deleteClip(clipId);
+      },
+      onCancel: () => {
+        // Remove overlay
+        overlay.remove();
+      },
+    });
+
+    // Position overlay absolutely over the card
+    const overlayElement = overlay.getElement();
+    overlayElement.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      margin: 0;
+    `;
+
+    // Append overlay to wrapper (positioned over the card)
+    cardWrapper.appendChild(overlayElement);
+  }
+
+  /**
+   * Open original URL in new tab
+   */
+  private openOriginalUrl(url: string): void {
+    chrome.tabs.create({ url });
+  }
+
+  /**
+   * Delete clip with undo (delegates to background)
+   */
+  private async deleteClip(clipId: string): Promise<void> {
+    const clipIndex = this.state.clips.findIndex(c => c.id === clipId);
+    if (clipIndex === -1) return;
+
+    const clip = this.state.clips[clipIndex];
+
+    // Remove from UI immediately (optimistic)
+    this.setState({
+      clips: this.state.clips.filter(c => c.id !== clipId),
+    });
+
+    // Schedule delete in background with clip data for undo (5 seconds)
+    await chrome.runtime.sendMessage({
+      type: 'SCHEDULE_DELETE',
+      payload: {
+        clipId,
+        clip,
+        index: clipIndex,
+        delayMs: 5000,
+      },
+    });
+
+    // Show undo toast with global undo handler
+    showUndoToast({
+      message: 'Clip deleted',
+      duration: 5000,
+      onUndo: () => {
+        // Call global undo function (defined in popup.ts)
+        // This works even if ClipsView is destroyed
+        (window as any).undoClipDelete(clipId);
+      },
+      onDismiss: () => {
+        // No cleanup needed - background handles state
+      },
+    });
+  }
+
+  /**
+   * Restore a deleted clip (called by global undo handler)
+   */
+  public restoreClip(clip: ClipSummary, index: number): void {
+    const clips = [...this.state.clips];
+    clips.splice(index, 0, clip);
+    this.setState({ clips });
+  }
+
+  /**
+   * Destroy the clips view (cleanup only - deletes handled by background)
    */
   destroy(): void {
+    // Just clean up UI - background script handles pending deletes
     this.clipCards.clear();
     this.container.innerHTML = '';
   }
