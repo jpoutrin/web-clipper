@@ -65,6 +65,7 @@ export class ClipsView {
    * Load clips from the server
    */
   async loadClips(): Promise<void> {
+    console.log('[ClipsView] loadClips called');
     this.setState({ loading: true, error: null });
 
     try {
@@ -107,8 +108,10 @@ export class ClipsView {
       }));
 
       // Append to existing clips if loading more, otherwise replace
+      // Defensive: ensure this.state.clips is an array, default to []
+      const currentClips = Array.isArray(this.state.clips) ? this.state.clips : [];
       const updatedClips = this.state.page > 1
-        ? [...this.state.clips, ...normalizedClips]
+        ? [...currentClips, ...normalizedClips]
         : normalizedClips;
 
       this.setState({
@@ -193,16 +196,23 @@ export class ClipsView {
    * Render error state
    */
   private renderError(): void {
+    console.log('[ClipsView] renderError called, error:', this.state.error);
     this.container.innerHTML = '';
+    console.log('[ClipsView] Creating EmptyState with onAction callback');
     const errorState = createEmptyState({
       icon: '⚠️',
       title: 'Failed to load clips',
       description: this.state.error || 'Please check your connection',
       actionText: 'Retry',
-      onAction: () => this.loadClips(),
+      onAction: () => {
+        console.log('[ClipsView] Retry button callback invoked');
+        this.loadClips();
+      },
     });
 
+    console.log('[ClipsView] Appending errorState to container');
     this.container.appendChild(errorState);
+    console.log('[ClipsView] errorState appended');
   }
 
   /**
@@ -261,7 +271,7 @@ export class ClipsView {
   private renderPagination(): void {
     const hasMorePages = this.state.page < this.state.totalPages;
     const totalClips = this.state.totalPages * 20; // Assuming 20 per page
-    const loadedClips = this.state.clips.length;
+    const loadedClips = this.state.clips?.length || 0;
 
     if (hasMorePages) {
       // Load More button
