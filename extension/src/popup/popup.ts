@@ -411,16 +411,34 @@ clipBtn.addEventListener('click', async () => {
   }
 });
 
+// Auto-dismiss timeout for messages
+let messageTimeout: ReturnType<typeof setTimeout> | null = null;
+
 // Show message
 function showMessage(text: string, type: 'success' | 'error' | 'info') {
   messageDiv.textContent = text;
   messageDiv.className = `message ${type}`;
   messageDiv.classList.remove('hidden');
+
+  // Clear existing timeout
+  if (messageTimeout) {
+    clearTimeout(messageTimeout);
+  }
+
+  // Auto-dismiss after 4 seconds
+  messageTimeout = setTimeout(() => {
+    hideMessage();
+    messageTimeout = null;
+  }, 4000);
 }
 
 // Hide message
 function hideMessage() {
   messageDiv.classList.add('hidden');
+  if (messageTimeout) {
+    clearTimeout(messageTimeout);
+    messageTimeout = null;
+  }
 }
 
 // Set loading state

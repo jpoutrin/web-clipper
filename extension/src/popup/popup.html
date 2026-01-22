@@ -8,10 +8,9 @@
 </head>
 <body>
   <div class="container">
-    <h1>Web Clipper</h1>
-
     <!-- Login Section -->
     <div id="login-section" class="section">
+      <h1>Web Clipper</h1>
       <div class="form-group">
         <label for="server-url">Server URL</label>
         <input type="url" id="server-url" placeholder="http://localhost:3000" />
@@ -23,16 +22,21 @@
 
     <!-- Clip Section (shown when authenticated) -->
     <div id="clip-section" class="section hidden">
-      <div class="status connected">
-        <span class="status-dot"></span>
-        Connected
-        <button id="logout-btn" class="btn-link">Logout</button>
+      <div class="wc-header">
+        <h1 class="wc-header-title">Web Clipper</h1>
+        <div class="wc-header-right">
+          <div class="wc-status">
+            <span class="wc-status-indicator"></span>
+            <span class="wc-status-text">Connected</span>
+          </div>
+          <button id="logout-btn" class="wc-logout-link">Logout</button>
+        </div>
       </div>
 
       <!-- Mode Selector -->
       <div class="mode-selector">
-        <label class="mode-selector-label">Clip format</label>
-        <div class="mode-list" role="tablist" aria-label="Capture mode selection">
+        <label class="mode-selector-label">CLIP AS</label>
+        <div class="wc-format-list mode-list" role="tablist" aria-label="Capture mode selection">
           <button class="mode-item active" data-mode="article" role="tab" aria-selected="true" tabindex="0">
             <span class="mode-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -105,23 +109,34 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="clip-title">Title</label>
-        <input type="text" id="clip-title" placeholder="Page title" />
+      <!-- Form Card -->
+      <div class="wc-form-card">
+        <div class="form-group wc-form-group--primary">
+          <label for="clip-title">Title</label>
+          <input type="text" id="clip-title" class="wc-input--primary" placeholder="Page title" />
+        </div>
+
+        <div class="form-group wc-form-group--secondary">
+          <label for="clip-tags">Tags</label>
+          <input type="text" id="clip-tags" placeholder="tag1, tag2" />
+        </div>
+
+        <div class="form-group wc-form-group--secondary" id="notes-group">
+          <label for="clip-notes">Notes <span class="wc-label-hint">(optional)</span></label>
+          <textarea id="clip-notes" placeholder="Optional notes..." rows="3"></textarea>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="clip-tags">Tags (comma separated)</label>
-        <input type="text" id="clip-tags" placeholder="tag1, tag2" />
-      </div>
+      <!-- Actions -->
+      <div class="wc-actions">
+        <button id="clip-btn" class="btn btn-primary wc-btn--primary">Clip Article</button>
 
-      <div class="form-group" id="notes-group">
-        <label for="clip-notes">Notes</label>
-        <textarea id="clip-notes" placeholder="Optional notes..." rows="3"></textarea>
+        <div class="wc-actions-secondary">
+          <button id="view-clips-btn" class="btn wc-btn--ghost">
+            View my clips →
+          </button>
+        </div>
       </div>
-
-      <button id="clip-btn" class="btn btn-primary">Clip Article</button>
-      <button id="view-clips-btn" class="btn btn-secondary">My Clips</button>
     </div>
 
     <!-- Clips View Section (shown when navigating to #clips) -->
